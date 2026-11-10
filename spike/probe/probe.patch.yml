@@ -1,0 +1,3 @@
+- insert:
+    - id: gentle-ai-probe
+      name: './index.js'

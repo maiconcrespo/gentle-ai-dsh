@@ -1,0 +1,31 @@
+# gentle-ai-dsh bundle layer. Every row is inserted under its own id, so no
+# base row a user may customize is replaced.
+- insert:
+    # Persona: global system-prompt section (see index.js).
+    - id: gentle-ai
+      name: 'gentle-ai-dsh'
+
+    # Skills shipped in this package. A separate provider at the bundled rank
+    # (600), so same-name user or project skills keep priority.
+    - id: gentle-ai-skills
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: gentle-ai
+        includeDefaultRoots: false
+        watch: false
+        bundledSkillDir: !!js >-
+          process.getBuiltinModule('node:path').join(
+            process.getBuiltinModule('node:path').dirname(
+              process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('gentle-ai-dsh/package.json')),
+            'skills')
+
+    # Engram memory over stdio MCP. Requires the `engram` executable on PATH;
+    # storage and project selection stay Engram-owned.
+    - id: gentle-ai-engram
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: engram
+        transport: stdio
+        command: engram
+        args: [mcp]
+        cwd: !!js process.cwd()

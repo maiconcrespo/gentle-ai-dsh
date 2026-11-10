@@ -1,0 +1,8 @@
+This package includes content from gentle-ai
+(https://github.com/Gentleman-Programming/gentle-ai), commit
+4309309fa90c2ad7eeee3126aa4de8a420915ede, MIT License,
+Copyright (c) 2025 Gentleman Programming:
+
+- persona.md (from internal/assets/generic/persona-gentleman.md)
+- skills/comment-writer/SKILL.md (from skills/comment-writer/SKILL.md;
+  its frontmatter declares license: Apache-2.0)
