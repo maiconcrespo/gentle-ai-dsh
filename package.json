@@ -6,8 +6,17 @@
   "license": "MIT",
   "type": "module",
   "main": "index.js",
+  "scripts": {
+    "test": "node --test test/",
+    "sync": "node scripts/sync-gentle-ai.mjs"
+  },
+  "gentleAi": {
+    "repository": "https://github.com/Gentleman-Programming/gentle-ai",
+    "ref": "v4.4.0"
+  },
   "files": [
     "index.js",
+    "lib",
     "persona.md",
     "cordis.patch.yml",
     "skills"

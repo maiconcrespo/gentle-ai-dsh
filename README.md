@@ -1,40 +1,41 @@
 # gentle-ai-dsh
 
-Spike: [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) as a [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) plugin bundle.
+A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skills and optional Engram memory for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). The ODD/SDD orchestrator is planned for v2.
 
-> Status: proof of concept, not published. See [docs/spike-findings.md](docs/spike-findings.md).
+## Install and remove
 
-## What it adds to dsh
-
-- **Persona:** the gentle-ai Gentleman persona, added as its own system-prompt section.
-- **Skills:** gentle-ai skills from `skills/`, loaded at bundled priority so your own skills with the same name win.
-- **Memory:** [Engram](https://github.com/Gentleman-Programming/engram) over stdio MCP. This needs the `engram` executable on your `PATH`.
-
-## Try it locally
-
-Requires Node.js 24.9 or newer and pnpm.
+Requires Node.js 24.9 or newer and dsh. Add the checkout to each profile you use:
 
 ```sh
 dsh plugin --profile web add /path/to/gentle-ai-dsh
-dsh web
+dsh plugin --profile headless add /path/to/gentle-ai-dsh
+dsh --profile web --dump-config
+dsh --profile headless --dump-config
 ```
 
-To remove it:
+The dump should include the `gentle-ai-dsh` layer. From a dsh source checkout, use `pnpm dsh` in place of `dsh`, for example `pnpm dsh plugin --profile web add /path/to/gentle-ai-dsh`.
+
+Remove it separately from each profile:
 
 ```sh
 dsh plugin --profile web remove gentle-ai-dsh
+dsh plugin --profile headless remove gentle-ai-dsh
 ```
 
-## Layout
+## Engram memory
 
-| Path | Purpose |
-|---|---|
-| `package.json` | Declares the `dsh.bundle` and the supported `engines.dsh` range |
-| `cordis.patch.yml` | The bundle layer: the persona plugin, the skill provider, and the Engram MCP row |
-| `index.js` | The persona plugin |
-| `persona.md`, `skills/` | Content copied from gentle-ai (see NOTICE) |
-| `spike/probe/` | A spike-only runtime probe; not part of the bundle |
-| `odd/tasks/` | Spike task tracking |
+Persistent memory requires the `engram` executable on `PATH`. Install it with `brew install gentleman-programming/tap/engram` (see [Engram](https://github.com/Gentleman-Programming/engram)) and restart dsh. Without Engram, dsh still boots with the persona and skills, but memory is unavailable: the plugin adds a system-prompt note so the agent can tell you how to install it, and logs a warning through dsh. The plugin does not download binaries.
+
+## Content and tests
+
+Content comes from a pinned gentle-ai ref. To update it, bump `gentleAi.ref` in `package.json`, then run:
+
+```sh
+npm run sync
+npm test
+```
+
+See [content sync](docs/content-sync.md) for details and [spike findings](docs/spike-findings.md) for historical verification. The sync uses Git and network access.
 
 ## License
 
