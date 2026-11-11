@@ -5,9 +5,10 @@
 // base, web-app and headless bundles set, and presets shadow it per session.
 import { readFileSync } from 'node:fs'
 import { findOnPath } from './lib/engram.js'
+import { SESSION_START, createSessionProjects, decideEngramWrite, sessionStartProject } from './lib/guard.js'
 
 export const name = 'gentle-ai'
-export const inject = ['systemPrompt']
+export const inject = ['systemPrompt', 'workingDirectory']
 
 const PERSONA = readFileSync(new URL('./persona.md', import.meta.url), 'utf8')
 const MISSING = 'Persistent memory (Engram) is not available in this session. The user can install it with brew install gentleman-programming/tap/engram (see https://github.com/Gentleman-Programming/engram), then restart dsh.'
@@ -44,4 +45,37 @@ export function apply(ctx, config = {}) {
       order: ctx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
     }))
   }
+  if (descriptors.some((d) => d.name === 'gentle-ai:engram-project')) guardEngramWrites(ctx)
+}
+
+// Hard guard behind the prompt instruction (issue #6): deny Engram writes that
+// do not pass the project backed by mem_session_start for the session's cwd.
+function guardEngramWrites(ctx) {
+  const bySession = new WeakMap()
+  const projectsOf = (agent) => {
+    const key = agent?.session ?? agent
+    if (!key) return undefined
+    if (!bySession.has(key)) bySession.set(key, createSessionProjects())
+    return bySession.get(key)
+  }
+  const cwdOf = (agent) => (agent?.session ? ctx.workingDirectory?.get(agent.session) : undefined)
+
+  ctx.on('tools/result', (exec, result) => {
+    if (exec.name !== SESSION_START) return
+    // Never infer the directory from the session cwd: an omitted directory
+    // makes Engram use its launch directory (review finding R3).
+    const directory = exec.arguments?.directory ?? exec.arguments?.cwd
+    projectsOf(exec.agent)?.record(directory, sessionStartProject(result, directory))
+  })
+
+  ctx.on('tools/pre-execute', async (exec, next) => {
+    const cwd = cwdOf(exec.agent)
+    const decision = decideEngramWrite({
+      toolName: exec.name,
+      args: exec.arguments,
+      cwd,
+      project: projectsOf(exec.agent)?.get(cwd),
+    })
+    return decision.kind === 'deny' ? decision : next()
+  })
 }

@@ -40,7 +40,7 @@ test('installed engram adds a session-project section (issue #4)', (t) => {
   assert.ok(!project.text.includes('{{'))
   const registered = []
   const warnings = []
-  const ctx = { effect: (fn) => fn(), systemPrompt: { getSectionOrder: () => 7, section: (s) => registered.push(s) }, logger: () => ({ warn: (s) => warnings.push(s) }) }
+  const ctx = { effect: (fn) => fn(), on: () => {}, systemPrompt: { getSectionOrder: () => 7, section: (s) => registered.push(s) }, logger: () => ({ warn: (s) => warnings.push(s) }) }
   apply(ctx, { env: { PATH: dir } })
   assert.deepEqual(registered.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:engram-project'])
   assert.deepEqual(warnings, [])
