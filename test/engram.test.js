@@ -17,11 +17,38 @@ test('finds only executable files on PATH', (t) => {
   assert.equal(findOnPath('engram', env), null)
   chmodSync(file, 0o755)
   assert.equal(findOnPath('engram', env), file)
-  assert.deepEqual(sections(env).map((s) => s.name), ['gentle-ai:persona'])
+})
+
+test('installed engram adds a session-project section (issue #4)', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'engram-test-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  writeFileSync(join(dir, 'engram'), '')
+  chmodSync(join(dir, 'engram'), 0o755)
+  const present = sections({ PATH: dir })
+  assert.deepEqual(present.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:engram-project'])
+  const project = present[1]
+  assert.equal(project.interpolate, false)
+  // Engram only accepts an explicit `project` backed by known context; a
+  // session started with `directory` backs a never-seen workspace (issue #4).
+  assert.match(project.text, /mem_session_start/)
+  assert.match(project.text, /`directory`/)
+  assert.match(project.text, /current working directory/)
+  for (const tool of ['mem_save', 'mem_search', 'mem_context', 'mem_session_summary']) {
+    assert.match(project.text, new RegExp(tool))
+  }
+  assert.match(project.text, /`project`/)
+  assert.ok(!project.text.includes('{{'))
+  const registered = []
+  const warnings = []
+  const ctx = { effect: (fn) => fn(), systemPrompt: { getSectionOrder: () => 7, section: (s) => registered.push(s) }, logger: () => ({ warn: (s) => warnings.push(s) }) }
+  apply(ctx, { env: { PATH: dir } })
+  assert.deepEqual(registered.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:engram-project'])
+  assert.deepEqual(warnings, [])
 })
 
 test('missing engram adds an install section and logs a warning', () => {
   const missing = sections({ PATH: '' })
+  // Without Engram there is no memory to scope: no session-project section.
   assert.deepEqual(missing.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:engram-missing'])
   assert.match(missing[1].text, /brew install gentleman-programming\/tap\/engram/)
   assert.equal(missing[1].interpolate, false)
