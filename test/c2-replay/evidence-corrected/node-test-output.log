@@ -1,0 +1,62 @@
+[c2-replay] 2026-11-11T22:40:29.761Z START run root=<RUN>
+[c2-replay] 2026-11-11T22:40:29.801Z START setup-01-npm-pack
+[c2-replay] 2026-11-11T22:40:30.868Z END setup-01-npm-pack exit=0 signal=null error=null durationMs=1064
+[c2-replay] 2026-11-11T22:40:30.937Z START setup-02-plugin-add-bundle
+[c2-replay] 2026-11-11T22:40:31.893Z END setup-02-plugin-add-bundle exit=0 signal=null error=null durationMs=953
+[c2-replay] 2026-11-11T22:40:31.893Z START setup-03-plugin-add-replay
+[c2-replay] 2026-11-11T22:40:32.532Z END setup-03-plugin-add-replay exit=0 signal=null error=null durationMs=636
+[c2-replay] 2026-11-11T22:40:32.540Z START setup-04-dump-config
+[c2-replay] 2026-11-11T22:40:32.780Z END setup-04-dump-config exit=0 signal=null error=null durationMs=237
+[c2-replay] 2026-11-11T22:40:32.797Z START setup-05-roster
+[c2-replay] 2026-11-11T22:40:40.936Z END setup-05-roster exit=0 signal=null error=null durationMs=8135
+[c2-replay] 2026-11-11T22:40:40.945Z END setup ok
+[c2-replay] 2026-11-11T22:40:40.959Z START explore-1-record-child
+[c2-replay] 2026-11-11T22:40:54.432Z END explore-1-record-child exit=0 signal=null error=null durationMs=13471
+[c2-replay] 2026-11-11T22:40:54.468Z START explore-2-parent
+[c2-replay] 2026-11-11T22:41:06.528Z END explore-2-parent exit=0 signal=null error=null durationMs=12057
+[c2-replay] 2026-11-11T22:41:06.648Z START verify-1-record-child
+[c2-replay] 2026-11-11T22:41:16.401Z END verify-1-record-child exit=0 signal=null error=null durationMs=9750
+[c2-replay] 2026-11-11T22:41:16.487Z START verify-2-parent
+[c2-replay] 2026-11-11T22:41:26.945Z END verify-2-parent exit=0 signal=null error=null durationMs=10456
+[c2-replay] 2026-11-11T22:41:27.117Z START worker-1-record-child
+[c2-replay] 2026-11-11T22:41:36.520Z END worker-1-record-child exit=0 signal=null error=null durationMs=9400
+[c2-replay] 2026-11-11T22:41:36.614Z START worker-2-parent
+[c2-replay] 2026-11-11T22:41:44.651Z END worker-2-parent exit=0 signal=null error=null durationMs=8034
+[c2-replay] 2026-11-11T22:41:44.825Z END run checks=26 failed=0
+[c2-replay] evidence: <RUN>\evidence (run c2-replay-HJ9ATy)
+▶ C2 role presets on dsh 0.2.2-rc.1 replay with the installed bundle
+  ✔ explore: headless parent run exits 0 with one parent and one child session (2.3924ms)
+  ✔ explore: parent selects gentle-ai-explore and the spawn returns at once (0.4634ms)
+  ✔ explore: child runs under gentle-ai-explore (1.0573ms)
+  ✔ explore: exact child tool roster is glob, grep, read (0.27ms)
+  ✔ explore: every tool outside the allowlist answers unknown tool (0.6492ms)
+  ✔ explore: allowed tools work (0.3492ms)
+  ✔ explore: parent receives the background completion notice (0.4395ms)
+  ✔ explore: workspace unchanged on disk (0.832ms)
+  ✔ verify: headless parent run exits 0 with one parent and one child session (0.1873ms)
+  ✔ verify: parent selects gentle-ai-verify and the spawn returns at once (0.5272ms)
+  ✔ verify: child runs under gentle-ai-verify (0.1629ms)
+  ✔ verify: exact child tool roster is glob, grep, pwsh, read (0.1389ms)
+  ✔ verify: every tool outside the allowlist answers unknown tool (0.1689ms)
+  ✔ verify: allowed tools work (0.1571ms)
+  ✔ verify: parent receives the background completion notice (0.1709ms)
+  ✔ verify: workspace unchanged on disk (0.6307ms)
+  ✔ worker: headless parent run exits 0 with one parent and one child session (0.0944ms)
+  ✔ worker: parent selects gentle-ai-worker and the spawn returns at once (0.1284ms)
+  ✔ worker: child runs under gentle-ai-worker (0.084ms)
+  ✔ worker: exact child tool roster is glob, grep, read (0.1068ms)
+  ✔ worker: every tool outside the allowlist answers unknown tool (0.1706ms)
+  ✔ worker: allowed tools work (0.1245ms)
+  ✔ worker: parent receives the background completion notice (0.1037ms)
+  ✔ worker: workspace unchanged on disk (2.1597ms)
+  ✔ isolation: every dsh command used the test-owned DSH_HOME (0.2487ms)
+  ✔ roles are distinct child sessions with their own preset (0.17ms)
+✔ C2 role presets on dsh 0.2.2-rc.1 replay with the installed bundle (75070.3312ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75199.6055

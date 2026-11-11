@@ -1,0 +1,1117 @@
+{
+  "pin": "0.2.2-rc.1",
+  "started": "2026-11-11T22:30:35.379Z",
+  "setup": {
+    "versions": {
+      "node": "v24.20.0",
+      "dsh": "0.2.2-rc.1",
+      "dsh-llm-replay": "0.2.2-rc.1",
+      "installManifest": {
+        "dependencies": {
+          "@deepseek-ai/dsh": "0.2.2-rc.1",
+          "@deepseek-ai/dsh-llm-replay": "0.2.2-rc.1"
+        }
+      }
+    },
+    "environment": {
+      "strippedCredentialLikeNames": [
+        "NAN_API_KEY",
+        "ZH_ART_IMAGE_API_KEY"
+      ],
+      "droppedNames": [
+        "NODE_TEST_CONTEXT",
+        "NODE_TEST_WORKER_ID"
+      ],
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "tmpdir": "<TMP>"
+    },
+    "pack": {
+      "filename": "gentle-ai-dsh-0.0.1.tgz",
+      "integrity": "sha512-0EZv/zXmTbIL0FQWKDq93zj0+bnUiVsdIWOlOyrHXcM/Sjf7ljxuwW3Po2Oum7TNBdcsNjIeSJb78fK/9iycNg==",
+      "shasum": "e1dc18992bd503b8fc5feb7cac91bdd3c0d75858",
+      "entryCount": 28,
+      "extracted": 28,
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 1104,
+          "sha256": "4783e0eb28e18956c025b58b37fd62ec83f87462bd5264bc0ad54526a2feb54d",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "README.md",
+          "size": 6871,
+          "sha256": "5cee74b7ecd24ad907dfe4654abdb2c3b4231e3dc0c302fe90af1fb3b80d739b",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "cordis.patch.yml",
+          "size": 4165,
+          "sha256": "e3cfbc92f829be91f933c9b5ce3ebf5174fa62d89a92d377f17b3e7984232e44",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "index.js",
+          "size": 4796,
+          "sha256": "cc8ad1d22dedbd7964aae430ff9036eed5c4802c1728ed2c0bb23a98fef14e97",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/dsh-runtime.js",
+          "size": 1801,
+          "sha256": "cc241a3f283a73e25119897557a1a14229622990debacd74c89c60c84b2cafff",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/engram.js",
+          "size": 503,
+          "sha256": "fb009e582fcd2ce08e0c7860dd3b5c427de6ca5fb147c339d2725ad4c621b2f1",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/guard.js",
+          "size": 3478,
+          "sha256": "2818669ce0545b499dcdb3cfcb9e9443b88baab56e3a78a8d51016cfeb7be36e",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/orchestrator.js",
+          "size": 8024,
+          "sha256": "8e5e8b3d40cfeddf74f9a4a62b86fed97cd7afc3111c11e7f2269b068974dc45",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/role-restrict.js",
+          "size": 1800,
+          "sha256": "c9d51958ac502b67704b94cf173bdd94699899f5338f04ee5b0ccbe6e120c631",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/routing.js",
+          "size": 26482,
+          "sha256": "156eacbdce9d85ba4996b5948de47ef69ab48d6c04318816c63cf337854a41e5",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "lib/skills.js",
+          "size": 1078,
+          "sha256": "db741261cd502a28b736b26c633b818907d6b1e3582504dc9bf60d2ba7a3e461",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "orchestrator.md",
+          "size": 56946,
+          "sha256": "e735cad3aa3e16ab7f02afc29987764b2c60f0fe18086a50e036084f37d94119",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "package.json",
+          "size": 986,
+          "sha256": "07619480e68d06070112285667905a479a85a685a1408761773ac3c13fe5d19c",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "persona.md",
+          "size": 5301,
+          "sha256": "71633455dcc59e45d623eaef3859500ac5cf78a6ad75e551da5d70650f7ef5b4",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/branch-pr/SKILL.md",
+          "size": 13559,
+          "sha256": "7c278080218718588e2ea483e4a68dcf31b9727a283e214f9d792adb938401eb",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/chained-pr/references/chaining-details.md",
+          "size": 3357,
+          "sha256": "9542bb687fce1318ca681699b51237592d97a036d8e32d9dea384f705c6cca7b",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/chained-pr/SKILL.md",
+          "size": 2572,
+          "sha256": "9b3c959d9e821931bf2821c3b785ee503ecdc969bda72da94b3922600bf6171a",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/cognitive-doc-design/SKILL.md",
+          "size": 2459,
+          "sha256": "dfd9424605e4b7964e68c941b3877538488a934078999dfcb9f058220f29ea22",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/comment-writer/SKILL.md",
+          "size": 2480,
+          "sha256": "dd19b179ffd768d814cb36705744b28961166daf6b81f861bd28dcfc345e037d",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/gentle-ai-bench/SKILL.md",
+          "size": 3216,
+          "sha256": "8dd9d4625559e3d643c77b950ce7c29e3c0dd05515aa2cc25b32317634daf3b3",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/gentle-ai-collab-perfect/SKILL.md",
+          "size": 22944,
+          "sha256": "bd19eb3b8bca394ccec6997d137d6ca41cfe420f273fac04d2e55bb1dc5210c1",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/issue-root-resolution/SKILL.md",
+          "size": 5643,
+          "sha256": "59bb825507735b911eb56286800b9ba50fca1242cab363d7a4d9d63e64c11405",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/rdd-advisory-transport/references/issue-impact-matrix.md",
+          "size": 7100,
+          "sha256": "05780c5fc111c93cad4bed92d9304a0286889f687b19fb785413b25c0a96c37e",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/rdd-advisory-transport/references/shared-advisory-transport-proposal.md",
+          "size": 20928,
+          "sha256": "221180ef55470cf04c5e58f447754a6285060d8c62e8d9f82e3b1dcd49dec396",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/rdd-advisory-transport/SKILL.md",
+          "size": 4423,
+          "sha256": "c61bd41de5768c2d6a2d2b0e3c707b0abcaea34367075b1014db59c58b71e6ec",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/rdd-defect-workflow/SKILL.md",
+          "size": 3787,
+          "sha256": "c9ab4403a8ae7ed70b86e3b60fe6171364cd149ab439d793425afac46b3abd88",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/systemic-issue-triage/SKILL.md",
+          "size": 7085,
+          "sha256": "17a1ef56e4d62fef625b557799f520018837d9544e78871894b1b975f8abe0e3",
+          "matchesWorkingTree": true
+        },
+        {
+          "path": "skills/work-unit-commits/SKILL.md",
+          "size": 4645,
+          "sha256": "17fc538ad73c329832d734c69802746184eace4cf735345825fa3f8341090916",
+          "matchesWorkingTree": true
+        }
+      ]
+    },
+    "profileManifest": {
+      "name": "dsh-profile-headless",
+      "private": true,
+      "dependencies": {
+        "@deepseek-ai/dsh-llm-replay": "link:<DSH_INSTALL>/node_modules/@deepseek-ai/dsh-llm-replay",
+        "gentle-ai-dsh": "link:<RUN>/bundle/package"
+      },
+      "dsh": {
+        "profile": {
+          "bundles": [
+            "@deepseek-ai/dsh-base",
+            "@deepseek-ai/dsh-headless",
+            "gentle-ai-dsh"
+          ]
+        }
+      }
+    },
+    "resolution": {
+      "specifier": "gentle-ai-dsh/role-restrict",
+      "resolved": "<RUN>\\bundle\\package\\lib\\role-restrict.js",
+      "realpath": "<RUN>\\bundle\\package\\lib\\role-restrict.js",
+      "insideStagedBundle": true,
+      "sha256": "c9d51958ac502b67704b94cf173bdd94699899f5338f04ee5b0ccbe6e120c631",
+      "repoSha256": "c9d51958ac502b67704b94cf173bdd94699899f5338f04ee5b0ccbe6e120c631"
+    },
+    "parentRoster": [
+      "create_goal",
+      "edit",
+      "get_goal",
+      "glob",
+      "grep",
+      "interrupt_agent",
+      "job_kill",
+      "job_list",
+      "job_output",
+      "list_agents",
+      "pwsh",
+      "read",
+      "read_image",
+      "send_message",
+      "skill",
+      "subagent",
+      "subagent_fork",
+      "todo_write",
+      "update_goal",
+      "web_fetch",
+      "workflow",
+      "working_directory",
+      "write"
+    ],
+    "status": "ok"
+  },
+  "roles": {
+    "explore": {
+      "preset": "gentle-ai-explore",
+      "seed": "C2SEED-a049d70a",
+      "done": "C2MARK-EXPLORE-DONE-a049d70a",
+      "calls": [
+        {
+          "id": "call_c2_explore_f0_create_goal",
+          "name": "create_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f1_edit",
+          "name": "edit",
+          "args": {
+            "file_path": "probe/seed.txt",
+            "old_string": "C2SEED-a049d70a",
+            "new_string": "edited-by-explore"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f2_get_goal",
+          "name": "get_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f3_interrupt_agent",
+          "name": "interrupt_agent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f4_job_kill",
+          "name": "job_kill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f5_job_list",
+          "name": "job_list",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f6_job_output",
+          "name": "job_output",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f7_list_agents",
+          "name": "list_agents",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f8_pwsh",
+          "name": "pwsh",
+          "args": {
+            "description": "write via shell",
+            "command": "Set-Content -Path shell-explore.txt -Value x"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f9_read_image",
+          "name": "read_image",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f10_send_message",
+          "name": "send_message",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f11_skill",
+          "name": "skill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f12_subagent",
+          "name": "subagent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f13_subagent_fork",
+          "name": "subagent_fork",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f14_todo_write",
+          "name": "todo_write",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f15_update_goal",
+          "name": "update_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f16_web_fetch",
+          "name": "web_fetch",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f17_workflow",
+          "name": "workflow",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f18_working_directory",
+          "name": "working_directory",
+          "args": {
+            "cd": "probe"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f19_write",
+          "name": "write",
+          "args": {
+            "file_path": "escape-explore.txt",
+            "content": "must not be written\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_explore_f20_apply_patch",
+          "name": "apply_patch",
+          "args": {
+            "input": "*** Begin Patch\n*** Add File: patch-explore.txt\n+x\n*** End Patch\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": false
+        },
+        {
+          "id": "call_c2_explore_read",
+          "name": "read",
+          "args": {
+            "file_path": "probe/seed.txt"
+          },
+          "expect": "ok",
+          "contains": "C2SEED-a049d70a"
+        },
+        {
+          "id": "call_c2_explore_glob",
+          "name": "glob",
+          "args": {
+            "pattern": "**/*.txt"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        },
+        {
+          "id": "call_c2_explore_grep",
+          "name": "grep",
+          "args": {
+            "pattern": "C2SEED-"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        }
+      ],
+      "forbidden": [
+        "create_goal",
+        "edit",
+        "get_goal",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "pwsh",
+        "read_image",
+        "send_message",
+        "skill",
+        "subagent",
+        "subagent_fork",
+        "todo_write",
+        "update_goal",
+        "web_fetch",
+        "workflow",
+        "working_directory",
+        "write"
+      ],
+      "extraForbidden": [
+        "apply_patch"
+      ],
+      "recording": {
+        "exitCode": 0,
+        "sessions": 1,
+        "assistantMessages": 25
+      },
+      "run": {
+        "exitCode": 0,
+        "sessions": 2,
+        "seedSha": "417e57c1495f54c4da04af9b4f7b131e6d368566182f8400517bedf41bb7fc34",
+        "disk": [
+          {
+            "path": "probe",
+            "type": "dir"
+          },
+          {
+            "path": "probe/seed.txt",
+            "type": "file",
+            "size": 16,
+            "sha256": "417e57c1495f54c4da04af9b4f7b131e6d368566182f8400517bedf41bb7fc34"
+          }
+        ]
+      }
+    },
+    "verify": {
+      "preset": "gentle-ai-verify",
+      "seed": "C2SEED-56a1ab3f",
+      "done": "C2MARK-VERIFY-DONE-56a1ab3f",
+      "calls": [
+        {
+          "id": "call_c2_verify_f0_create_goal",
+          "name": "create_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f1_edit",
+          "name": "edit",
+          "args": {
+            "file_path": "probe/seed.txt",
+            "old_string": "C2SEED-56a1ab3f",
+            "new_string": "edited-by-verify"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f2_get_goal",
+          "name": "get_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f3_interrupt_agent",
+          "name": "interrupt_agent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f4_job_kill",
+          "name": "job_kill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f5_job_list",
+          "name": "job_list",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f6_job_output",
+          "name": "job_output",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f7_list_agents",
+          "name": "list_agents",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f8_read_image",
+          "name": "read_image",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f9_send_message",
+          "name": "send_message",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f10_skill",
+          "name": "skill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f11_subagent",
+          "name": "subagent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f12_subagent_fork",
+          "name": "subagent_fork",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f13_todo_write",
+          "name": "todo_write",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f14_update_goal",
+          "name": "update_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f15_web_fetch",
+          "name": "web_fetch",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f16_workflow",
+          "name": "workflow",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f17_working_directory",
+          "name": "working_directory",
+          "args": {
+            "cd": "probe"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f18_write",
+          "name": "write",
+          "args": {
+            "file_path": "escape-verify.txt",
+            "content": "must not be written\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_verify_f19_apply_patch",
+          "name": "apply_patch",
+          "args": {
+            "input": "*** Begin Patch\n*** Add File: patch-verify.txt\n+x\n*** End Patch\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": false
+        },
+        {
+          "id": "call_c2_verify_read",
+          "name": "read",
+          "args": {
+            "file_path": "probe/seed.txt"
+          },
+          "expect": "ok",
+          "contains": "C2SEED-56a1ab3f"
+        },
+        {
+          "id": "call_c2_verify_glob",
+          "name": "glob",
+          "args": {
+            "pattern": "**/*.txt"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        },
+        {
+          "id": "call_c2_verify_grep",
+          "name": "grep",
+          "args": {
+            "pattern": "C2SEED-"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        },
+        {
+          "id": "call_c2_verify_pwsh",
+          "name": "pwsh",
+          "args": {
+            "description": "print marker",
+            "command": "Write-Output C2-VERIFY-PWSH-56a1ab3f"
+          },
+          "expect": "ok",
+          "contains": "C2-VERIFY-PWSH-56a1ab3f"
+        }
+      ],
+      "forbidden": [
+        "create_goal",
+        "edit",
+        "get_goal",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "read_image",
+        "send_message",
+        "skill",
+        "subagent",
+        "subagent_fork",
+        "todo_write",
+        "update_goal",
+        "web_fetch",
+        "workflow",
+        "working_directory",
+        "write"
+      ],
+      "extraForbidden": [
+        "apply_patch"
+      ],
+      "recording": {
+        "exitCode": 0,
+        "sessions": 1,
+        "assistantMessages": 25
+      },
+      "run": {
+        "exitCode": 0,
+        "sessions": 2,
+        "seedSha": "091b545f7774337aa73dd3159ff21bc09f02137820f576bc365764e96492038a",
+        "disk": [
+          {
+            "path": "probe",
+            "type": "dir"
+          },
+          {
+            "path": "probe/seed.txt",
+            "type": "file",
+            "size": 16,
+            "sha256": "091b545f7774337aa73dd3159ff21bc09f02137820f576bc365764e96492038a"
+          }
+        ]
+      }
+    },
+    "worker": {
+      "preset": "gentle-ai-worker",
+      "seed": "C2SEED-3b57af0a",
+      "done": "C2MARK-WORKER-DONE-3b57af0a",
+      "calls": [
+        {
+          "id": "call_c2_worker_f0_create_goal",
+          "name": "create_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f1_edit",
+          "name": "edit",
+          "args": {
+            "file_path": "probe/seed.txt",
+            "old_string": "C2SEED-3b57af0a",
+            "new_string": "edited-by-worker"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f2_get_goal",
+          "name": "get_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f3_interrupt_agent",
+          "name": "interrupt_agent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f4_job_kill",
+          "name": "job_kill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f5_job_list",
+          "name": "job_list",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f6_job_output",
+          "name": "job_output",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f7_list_agents",
+          "name": "list_agents",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f8_pwsh",
+          "name": "pwsh",
+          "args": {
+            "description": "write via shell",
+            "command": "Set-Content -Path shell-worker.txt -Value x"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f9_read_image",
+          "name": "read_image",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f10_send_message",
+          "name": "send_message",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f11_skill",
+          "name": "skill",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f12_subagent",
+          "name": "subagent",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f13_subagent_fork",
+          "name": "subagent_fork",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f14_todo_write",
+          "name": "todo_write",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f15_update_goal",
+          "name": "update_goal",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f16_web_fetch",
+          "name": "web_fetch",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f17_workflow",
+          "name": "workflow",
+          "args": {},
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f18_working_directory",
+          "name": "working_directory",
+          "args": {
+            "cd": "probe"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f19_write",
+          "name": "write",
+          "args": {
+            "file_path": "escape-worker.txt",
+            "content": "must not be written\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": true
+        },
+        {
+          "id": "call_c2_worker_f20_apply_patch",
+          "name": "apply_patch",
+          "args": {
+            "input": "*** Begin Patch\n*** Add File: patch-worker.txt\n+x\n*** End Patch\n"
+          },
+          "expect": "unknown",
+          "inParentRoster": false
+        },
+        {
+          "id": "call_c2_worker_read",
+          "name": "read",
+          "args": {
+            "file_path": "probe/seed.txt"
+          },
+          "expect": "ok",
+          "contains": "C2SEED-3b57af0a"
+        },
+        {
+          "id": "call_c2_worker_glob",
+          "name": "glob",
+          "args": {
+            "pattern": "**/*.txt"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        },
+        {
+          "id": "call_c2_worker_grep",
+          "name": "grep",
+          "args": {
+            "pattern": "C2SEED-"
+          },
+          "expect": "ok",
+          "contains": "seed.txt"
+        }
+      ],
+      "forbidden": [
+        "create_goal",
+        "edit",
+        "get_goal",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "pwsh",
+        "read_image",
+        "send_message",
+        "skill",
+        "subagent",
+        "subagent_fork",
+        "todo_write",
+        "update_goal",
+        "web_fetch",
+        "workflow",
+        "working_directory",
+        "write"
+      ],
+      "extraForbidden": [
+        "apply_patch"
+      ],
+      "recording": {
+        "exitCode": 0,
+        "sessions": 1,
+        "assistantMessages": 25
+      },
+      "run": {
+        "exitCode": 0,
+        "sessions": 2,
+        "seedSha": "b5f52dd3a0a83ad7d646c00d666ff6cab59cdef8f7b8273e96dbbf4a1ca7c23a",
+        "disk": [
+          {
+            "path": "probe",
+            "type": "dir"
+          },
+          {
+            "path": "probe/seed.txt",
+            "type": "file",
+            "size": 16,
+            "sha256": "b5f52dd3a0a83ad7d646c00d666ff6cab59cdef8f7b8273e96dbbf4a1ca7c23a"
+          }
+        ]
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "explore: headless parent run exits 0 with one parent and one child session",
+      "status": "pass"
+    },
+    {
+      "name": "explore: parent selects gentle-ai-explore and the spawn returns at once",
+      "status": "pass"
+    },
+    {
+      "name": "explore: child runs under gentle-ai-explore",
+      "status": "pass"
+    },
+    {
+      "name": "explore: exact child tool roster is glob, grep, read",
+      "status": "pass"
+    },
+    {
+      "name": "explore: every tool outside the allowlist answers unknown tool",
+      "status": "pass"
+    },
+    {
+      "name": "explore: allowed tools work",
+      "status": "pass"
+    },
+    {
+      "name": "explore: parent receives the background completion notice",
+      "status": "pass"
+    },
+    {
+      "name": "explore: workspace unchanged on disk",
+      "status": "pass"
+    },
+    {
+      "name": "verify: headless parent run exits 0 with one parent and one child session",
+      "status": "pass"
+    },
+    {
+      "name": "verify: parent selects gentle-ai-verify and the spawn returns at once",
+      "status": "pass"
+    },
+    {
+      "name": "verify: child runs under gentle-ai-verify",
+      "status": "pass"
+    },
+    {
+      "name": "verify: exact child tool roster is glob, grep, pwsh, read",
+      "status": "pass"
+    },
+    {
+      "name": "verify: every tool outside the allowlist answers unknown tool",
+      "status": "pass"
+    },
+    {
+      "name": "verify: allowed tools work",
+      "status": "pass"
+    },
+    {
+      "name": "verify: parent receives the background completion notice",
+      "status": "pass"
+    },
+    {
+      "name": "verify: workspace unchanged on disk",
+      "status": "pass"
+    },
+    {
+      "name": "worker: headless parent run exits 0 with one parent and one child session",
+      "status": "pass"
+    },
+    {
+      "name": "worker: parent selects gentle-ai-worker and the spawn returns at once",
+      "status": "pass"
+    },
+    {
+      "name": "worker: child runs under gentle-ai-worker",
+      "status": "pass"
+    },
+    {
+      "name": "worker: exact child tool roster is glob, grep, read",
+      "status": "pass"
+    },
+    {
+      "name": "worker: every tool outside the allowlist answers unknown tool",
+      "status": "pass"
+    },
+    {
+      "name": "worker: allowed tools work",
+      "status": "pass"
+    },
+    {
+      "name": "worker: parent receives the background completion notice",
+      "status": "pass"
+    },
+    {
+      "name": "worker: workspace unchanged on disk",
+      "status": "pass"
+    },
+    {
+      "name": "roles are distinct child sessions with their own preset",
+      "status": "pass"
+    }
+  ],
+  "ended": "2026-11-11T22:31:59.862Z",
+  "timing": {
+    "explore": {
+      "parentTurn1End": 1794436287730,
+      "childLastTurnEnd": 1794436288658,
+      "notice": 1794436288667,
+      "parentTurnEnds": [
+        1794436287730,
+        1794436288692
+      ]
+    },
+    "verify": {
+      "parentTurn1End": 1794436302280,
+      "childLastTurnEnd": 1794436304801,
+      "notice": 1794436304809,
+      "parentTurnEnds": [
+        1794436302280,
+        1794436304832
+      ]
+    },
+    "worker": {
+      "parentTurn1End": 1794436318741,
+      "childLastTurnEnd": 1794436319656,
+      "notice": 1794436319665,
+      "parentTurnEnds": [
+        1794436318741,
+        1794436319688
+      ]
+    }
+  }
+}

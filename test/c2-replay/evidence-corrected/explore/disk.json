@@ -1,0 +1,29 @@
+{
+  "workspace": "<RUN>\\ws-explore",
+  "seedSha256Before": "c1a7af53835bce23b5af6d76b92a87e25d7f13660b89180ce8b99e57d5676a5d",
+  "files": [
+    {
+      "path": "probe",
+      "type": "dir"
+    },
+    {
+      "path": "probe/seed.txt",
+      "type": "file",
+      "size": 16,
+      "sha256": "c1a7af53835bce23b5af6d76b92a87e25d7f13660b89180ce8b99e57d5676a5d"
+    }
+  ],
+  "recordingWorkspace": "<RUN>\\rec-explore",
+  "recordingFiles": [
+    {
+      "path": "probe",
+      "type": "dir"
+    },
+    {
+      "path": "probe/seed.txt",
+      "type": "file",
+      "size": 16,
+      "sha256": "c1a7af53835bce23b5af6d76b92a87e25d7f13660b89180ce8b99e57d5676a5d"
+    }
+  ]
+}

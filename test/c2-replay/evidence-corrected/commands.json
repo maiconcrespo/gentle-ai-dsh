@@ -1,0 +1,406 @@
+[
+  {
+    "label": "setup-01-npm-pack",
+    "argv": [
+      "node",
+      "C:\\nvm4w\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "pack",
+      "--json",
+      "--ignore-scripts",
+      "--pack-destination",
+      "<RUN>\\pack"
+    ],
+    "cwd": "<REPO>",
+    "env": {
+      "npm_config_cache": "<RUN>\\npm-cache",
+      "npm_config_logs_dir": "<RUN>\\npm-logs",
+      "npm_config_userconfig": "<RUN>\\empty.npmrc",
+      "npm_config_update_notifier": "false",
+      "npm_config_fund": "false",
+      "npm_config_audit": "false"
+    },
+    "start": "2026-11-11T22:40:29.801Z",
+    "end": "2026-11-11T22:40:30.865Z",
+    "durationMs": 1064,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/setup-01-npm-pack.stdout.txt",
+    "stderr": "logs/setup-01-npm-pack.stderr.txt"
+  },
+  {
+    "label": "setup-02-plugin-add-bundle",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "plugin",
+      "--profile",
+      "headless",
+      "add",
+      "--offline",
+      "--store-dir=<RUN>\\pnpm-store",
+      "<RUN>\\bundle\\package"
+    ],
+    "cwd": "<RUN>",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "XDG_CONFIG_HOME": "<RUN>\\xdg\\config",
+      "XDG_CACHE_HOME": "<RUN>\\xdg\\cache",
+      "XDG_STATE_HOME": "<RUN>\\xdg\\state",
+      "XDG_DATA_HOME": "<RUN>\\xdg\\data",
+      "npm_config_userconfig": "<RUN>\\empty.npmrc",
+      "npm_config_update_notifier": "false"
+    },
+    "start": "2026-11-11T22:40:30.937Z",
+    "end": "2026-11-11T22:40:31.890Z",
+    "durationMs": 953,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/setup-02-plugin-add-bundle.stdout.txt",
+    "stderr": "logs/setup-02-plugin-add-bundle.stderr.txt"
+  },
+  {
+    "label": "setup-03-plugin-add-replay",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "plugin",
+      "--profile",
+      "headless",
+      "add",
+      "--offline",
+      "--store-dir=<RUN>\\pnpm-store",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh-llm-replay"
+    ],
+    "cwd": "<RUN>",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "XDG_CONFIG_HOME": "<RUN>\\xdg\\config",
+      "XDG_CACHE_HOME": "<RUN>\\xdg\\cache",
+      "XDG_STATE_HOME": "<RUN>\\xdg\\state",
+      "XDG_DATA_HOME": "<RUN>\\xdg\\data",
+      "npm_config_userconfig": "<RUN>\\empty.npmrc",
+      "npm_config_update_notifier": "false"
+    },
+    "start": "2026-11-11T22:40:31.893Z",
+    "end": "2026-11-11T22:40:32.529Z",
+    "durationMs": 636,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/setup-03-plugin-add-replay.stdout.txt",
+    "stderr": "logs/setup-03-plugin-add-replay.stderr.txt"
+  },
+  {
+    "label": "setup-04-dump-config",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--dump-config"
+    ],
+    "cwd": "<RUN>\\ws-roster",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\setup-roster.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\setup-roster.replay.json"
+    },
+    "start": "2026-11-11T22:40:32.540Z",
+    "end": "2026-11-11T22:40:32.777Z",
+    "durationMs": 237,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/setup-04-dump-config.stdout.txt",
+    "stderr": "logs/setup-04-dump-config.stderr.txt"
+  },
+  {
+    "label": "setup-05-roster",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "read-only",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 roster probe"
+    ],
+    "cwd": "<RUN>\\ws-roster",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\setup-05-roster.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\setup-05-roster.replay.json"
+    },
+    "start": "2026-11-11T22:40:32.797Z",
+    "end": "2026-11-11T22:40:40.932Z",
+    "durationMs": 8135,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/setup-05-roster.stdout.txt",
+    "stderr": "logs/setup-05-roster.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 0,
+      "after": 1,
+      "forWorkspace": 1
+    }
+  },
+  {
+    "label": "explore-1-record-child",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "read-only",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 explore child recording"
+    ],
+    "cwd": "<RUN>\\rec-explore",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\explore-1-record-child.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\explore-1-record-child.replay.json"
+    },
+    "start": "2026-11-11T22:40:40.959Z",
+    "end": "2026-11-11T22:40:54.430Z",
+    "durationMs": 13471,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/explore-1-record-child.stdout.txt",
+    "stderr": "logs/explore-1-record-child.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 1,
+      "after": 2,
+      "forWorkspace": 1
+    }
+  },
+  {
+    "label": "explore-2-parent",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "workspace-write",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 explore delegation probe"
+    ],
+    "cwd": "<RUN>\\ws-explore",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\explore-2-parent.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\explore-2-parent.replay.json",
+      "DSH_SNAPSHOT_CHILD_FILES": "<RUN>\\fixtures\\explore.child.session.v4.jsonl"
+    },
+    "start": "2026-11-11T22:40:54.468Z",
+    "end": "2026-11-11T22:41:06.525Z",
+    "durationMs": 12057,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/explore-2-parent.stdout.txt",
+    "stderr": "logs/explore-2-parent.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 2,
+      "after": 4,
+      "forWorkspace": 2
+    }
+  },
+  {
+    "label": "verify-1-record-child",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "read-only",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 verify child recording"
+    ],
+    "cwd": "<RUN>\\rec-verify",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\verify-1-record-child.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\verify-1-record-child.replay.json"
+    },
+    "start": "2026-11-11T22:41:06.648Z",
+    "end": "2026-11-11T22:41:16.398Z",
+    "durationMs": 9750,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/verify-1-record-child.stdout.txt",
+    "stderr": "logs/verify-1-record-child.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 4,
+      "after": 5,
+      "forWorkspace": 1
+    }
+  },
+  {
+    "label": "verify-2-parent",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "workspace-write",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 verify delegation probe"
+    ],
+    "cwd": "<RUN>\\ws-verify",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\verify-2-parent.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\verify-2-parent.replay.json",
+      "DSH_SNAPSHOT_CHILD_FILES": "<RUN>\\fixtures\\verify.child.session.v4.jsonl"
+    },
+    "start": "2026-11-11T22:41:16.487Z",
+    "end": "2026-11-11T22:41:26.943Z",
+    "durationMs": 10456,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/verify-2-parent.stdout.txt",
+    "stderr": "logs/verify-2-parent.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 5,
+      "after": 7,
+      "forWorkspace": 2
+    }
+  },
+  {
+    "label": "worker-1-record-child",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "read-only",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 worker child recording"
+    ],
+    "cwd": "<RUN>\\rec-worker",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\worker-1-record-child.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\worker-1-record-child.replay.json"
+    },
+    "start": "2026-11-11T22:41:27.117Z",
+    "end": "2026-11-11T22:41:36.517Z",
+    "durationMs": 9400,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/worker-1-record-child.stdout.txt",
+    "stderr": "logs/worker-1-record-child.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 7,
+      "after": 8,
+      "forWorkspace": 1
+    }
+  },
+  {
+    "label": "worker-2-parent",
+    "argv": [
+      "node",
+      "<DSH_INSTALL>\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "--profile",
+      "headless",
+      "--patch",
+      "<REPO>\\test\\c2-replay\\replay.patch.yml",
+      "--permission-mode",
+      "workspace-write",
+      "--approval-policy",
+      "never",
+      "--json",
+      "C2 worker delegation probe"
+    ],
+    "cwd": "<RUN>\\ws-worker",
+    "env": {
+      "DSH_HOME": "<RUN>\\dsh-home",
+      "DSH_AGENTS_HOME": "<RUN>\\agents-home-empty",
+      "DSH_TELEMETRY_MODE": "DISABLED",
+      "DO_NOT_TRACK": "1",
+      "DSH_SNAPSHOT_FILE": "<RUN>\\fixtures\\worker-2-parent.replay.json",
+      "DSH_SNAPSHOT_OVERRIDE": "<RUN>\\fixtures\\worker-2-parent.replay.json",
+      "DSH_SNAPSHOT_CHILD_FILES": "<RUN>\\fixtures\\worker.child.session.v4.jsonl"
+    },
+    "start": "2026-11-11T22:41:36.614Z",
+    "end": "2026-11-11T22:41:44.648Z",
+    "durationMs": 8034,
+    "exitCode": 0,
+    "signal": null,
+    "spawnError": null,
+    "stdout": "logs/worker-2-parent.stdout.txt",
+    "stderr": "logs/worker-2-parent.stderr.txt",
+    "sessionFilesUnderDshHome": {
+      "before": 8,
+      "after": 10,
+      "forWorkspace": 2
+    }
+  }
+]

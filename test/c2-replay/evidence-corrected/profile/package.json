@@ -1,0 +1,17 @@
+{
+  "name": "dsh-profile-headless",
+  "private": true,
+  "dependencies": {
+    "@deepseek-ai/dsh-llm-replay": "link:<DSH_INSTALL>/node_modules/@deepseek-ai/dsh-llm-replay",
+    "gentle-ai-dsh": "link:<RUN>/bundle/package"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-headless",
+        "gentle-ai-dsh"
+      ]
+    }
+  }
+}

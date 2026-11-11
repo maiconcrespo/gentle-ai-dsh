@@ -1,0 +1,29 @@
+{
+  "workspace": "<RUN>\\ws-verify",
+  "seedSha256Before": "d77b9cde54f6353c3c109fb434c69cda2fd4745503989697033bf14d4bcd1ac0",
+  "files": [
+    {
+      "path": "probe",
+      "type": "dir"
+    },
+    {
+      "path": "probe/seed.txt",
+      "type": "file",
+      "size": 16,
+      "sha256": "d77b9cde54f6353c3c109fb434c69cda2fd4745503989697033bf14d4bcd1ac0"
+    }
+  ],
+  "recordingWorkspace": "<RUN>\\rec-verify",
+  "recordingFiles": [
+    {
+      "path": "probe",
+      "type": "dir"
+    },
+    {
+      "path": "probe/seed.txt",
+      "type": "file",
+      "size": 16,
+      "sha256": "d77b9cde54f6353c3c109fb434c69cda2fd4745503989697033bf14d4bcd1ac0"
+    }
+  ]
+}
