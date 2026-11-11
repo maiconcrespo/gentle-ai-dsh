@@ -11,6 +11,8 @@ export const name = 'gentle-ai'
 export const inject = ['systemPrompt', 'workingDirectory']
 
 const PERSONA = readFileSync(new URL('./persona.md', import.meta.url), 'utf8')
+// gentle-ai generic orchestrator rendered for dsh by scripts/sync-gentle-ai.mjs (issue #3).
+const ORCHESTRATOR = readFileSync(new URL('./orchestrator.md', import.meta.url), 'utf8')
 const MISSING = 'Persistent memory (Engram) is not available in this session. The user can install it with brew install gentleman-programming/tap/engram (see https://github.com/Gentleman-Programming/engram), then restart dsh.'
 
 // dsh starts one Engram process for every session, with the directory dsh was
@@ -26,7 +28,10 @@ const PROJECT = [
 ].join('\n')
 
 export function sections(env = process.env) {
-  const result = [{ name: 'gentle-ai:persona', text: PERSONA, interpolate: false }]
+  const result = [
+    { name: 'gentle-ai:persona', text: PERSONA, interpolate: false },
+    { name: 'gentle-ai:orchestrator', text: ORCHESTRATOR, interpolate: false },
+  ]
   if (findOnPath('engram', env)) result.push({ name: 'gentle-ai:engram-project', text: PROJECT, interpolate: false })
   else result.push({ name: 'gentle-ai:engram-missing', text: MISSING, interpolate: false })
   return result

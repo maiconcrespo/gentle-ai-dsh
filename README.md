@@ -2,6 +2,16 @@
 
 A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skills and optional Engram memory for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). The ODD/SDD orchestrator is planned for v2.
 
+## V2 contributor handoff (draft)
+
+The `feat/3-v2` branch contains an experimental orchestrator slice, not a complete
+v2 release. Start with [the v2 plan and handoff](odd/tasks/v2.md) for unit boundaries,
+shared-file ownership, verification evidence and the next developer's checklist.
+The compatibility audit is pending after an explorer quota failure; native review
+approval and real-model v2 behavior proof are also pending. Do not merge or claim
+working automatic delegation from the current unit tests or boot probe alone.
+Web-only role presets and final integration belong to a later PR; issue #3 stays open.
+
 ## Install and remove
 
 Requires Node.js 24.9 or newer and dsh. Add the checkout to each profile you use:
