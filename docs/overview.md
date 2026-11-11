@@ -52,11 +52,16 @@ The orchestrator and routing are not hand-copied: `lib/orchestrator.js` and `lib
 
 ## Prompt cost
 
-The plugin adds about 62 KB of system prompt per request (persona 5 KB + orchestrator 56 KB, plus a small Engram note). These figures are **estimates, not measured**:
+The plugin adds about 62 KB of system prompt per request: the persona (5 KB), the orchestrator (56 KB) and a small Engram note. Measured with provider-reported usage from two real `dsh web` sessions in the same test workspace, on 2026-11-11:
 
-- About 14,000–17,000 tokens for the orchestrator section. dsh's own heuristic is 4 characters per token; DeepSeek's documentation suggests about 0.3 tokens per English character.
-- DeepSeek caches repeated prompt prefixes automatically, and cache hits are billed at a small fraction of the normal input price. See [pricing](https://api-docs.deepseek.com/quick_start/pricing) and [context caching](https://api-docs.deepseek.com/guides/kv_cache).
-- Pending: measure the provider-reported input and cache-read tokens from a real `dsh web` session.
+| Session | First request: prompt tokens | Later requests: served from cache |
+|---|---|---|
+| Before v2 (no orchestrator) | 19,690 | about 99% |
+| With v2 (orchestrator) | 30,948 | about 99% (225–551 uncached tokens per request) |
+
+- **The orchestrator section costs about 11,300 tokens per request**, about 5 bytes per token. This is the difference between the two first requests, so it includes some noise from the different first user message.
+- **DeepSeek caches the repeated prompt prefix automatically.** After the first request in a session, almost the whole prompt is billed at the cache-hit price, a small fraction of the normal input price. See [pricing](https://api-docs.deepseek.com/quick_start/pricing) and [context caching](https://api-docs.deepseek.com/guides/kv_cache).
+- **The full price is paid on the first request of a session, or when the cache has expired.** DeepSeek keeps unused cache entries for a few hours to a few days.
 
 ## Status and roadmap
 
