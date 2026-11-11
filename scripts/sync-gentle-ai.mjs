@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseFrontmatter, validateSkill } from '../lib/skills.js'
+import { renderOrchestrator } from '../lib/orchestrator.js'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const { gentleAi: { repository, ref } } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -15,6 +16,9 @@ try {
   const personaPath = 'internal/assets/generic/persona-gentleman.md'
   const persona = readFileSync(join(source, personaPath), 'utf8')
   if (persona.includes('{{')) throw new Error('Persona contains template markers')
+  const orchestratorPath = 'internal/assets/generic/orchestrator.md'
+  const sectionsPath = 'internal/assets/skills/_shared/odd-orchestrator-sections.md'
+  const orchestrator = renderOrchestrator(readFileSync(join(source, orchestratorPath), 'utf8'), readFileSync(join(source, sectionsPath), 'utf8'), 'dsh')
   const skillRoot = join(source, 'skills')
   const skills = []
   for (const entry of readdirSync(skillRoot, { withFileTypes: true })) {
@@ -37,7 +41,8 @@ try {
   rmSync(target, { recursive: true, force: true })
   for (const skill of skills) cpSync(join(skillRoot, skill), join(target, skill), { recursive: true })
   writeFileSync(join(root, 'persona.md'), persona)
-  writeFileSync(join(root, 'NOTICE'), `Content from ${repository}\nRef: ${ref}\nCommit: ${commit}\nMIT License\nCopyright (c) 2025 Gentleman Programming\n\nPersona: ${personaPath}\nShipped skill directories:\n${skills.map((skill) => `- skills/${skill}/`).join('\n')}\n\nEach skill's own frontmatter license may differ.\n`)
+  writeFileSync(join(root, 'orchestrator.md'), orchestrator)
+  writeFileSync(join(root, 'NOTICE'), `Content from ${repository}\nRef: ${ref}\nCommit: ${commit}\nMIT License\nCopyright (c) 2025 Gentleman Programming\n\nPersona: ${personaPath}\nOrchestrator: ${orchestratorPath} + ${sectionsPath} (rendered for dsh without review/RDD sections)\nShipped skill directories:\n${skills.map((skill) => `- skills/${skill}/`).join('\n')}\n\nEach skill's own frontmatter license may differ.\n`)
 } finally {
   rmSync(temp, { recursive: true, force: true })
 }

@@ -18,6 +18,7 @@
     "index.js",
     "lib",
     "persona.md",
+    "orchestrator.md",
     "cordis.patch.yml",
     "skills"
   ],
