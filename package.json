@@ -24,6 +24,7 @@
   ],
   "exports": {
     ".": "./index.js",
+    "./role-restrict": "./lib/role-restrict.js",
     "./package.json": "./package.json",
     "./cordis.patch.yml": "./cordis.patch.yml"
   },

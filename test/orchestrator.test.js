@@ -70,12 +70,14 @@ test('fails loudly on a missing shared section, leftover markers or review leaks
 
 test('shipped orchestrator.md is rendered, review-free and registered as a section', () => {
   const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8')
-  assert.ok(text.trim().length > 1000)
+  // Structural checks use LF text: a Windows checkout (core.autocrlf) has CRLF line endings.
+  const lf = text.replace(/\r\n/g, '\n')
+  assert.ok(lf.trim().length > 1000)
   // Orchestrator + Implementation Routing + dsh adaptation measured 56293 bytes (v4.4.0); guard against unexpected growth.
-  assert.ok(Buffer.byteLength(text) < 60000, `orchestrator.md is ${Buffer.byteLength(text)} bytes`)
-  const adaptationStart = text.indexOf('\n## dsh runtime adaptation\n')
+  assert.ok(Buffer.byteLength(lf) < 60000, `orchestrator.md is ${Buffer.byteLength(lf)} bytes`)
+  const adaptationStart = lf.indexOf('\n## dsh runtime adaptation\n')
   assert.ok(adaptationStart > 0, 'dsh runtime adaptation missing')
-  assert.doesNotThrow(() => assertNoReviewLeaks(text.slice(0, adaptationStart)))
+  assert.doesNotThrow(() => assertNoReviewLeaks(lf.slice(0, adaptationStart)))
   for (const leak of ['{{', 'gentle_review', 'Judgment Day', 'odd-orchestrator-fragment']) {
     assert.ok(!text.includes(leak), `orchestrator.md contains ${leak}`)
   }
