@@ -1,8 +1,21 @@
-This package includes content from gentle-ai
-(https://github.com/Gentleman-Programming/gentle-ai), commit
-4309309fa90c2ad7eeee3126aa4de8a420915ede, MIT License,
-Copyright (c) 2025 Gentleman Programming:
+Content from https://github.com/Gentleman-Programming/gentle-ai
+Ref: v4.4.0
+Commit: 55240afb100ad6d2ef5fbe16f7be33a7693f77ad
+MIT License
+Copyright (c) 2025 Gentleman Programming
 
-- persona.md (from internal/assets/generic/persona-gentleman.md)
-- skills/comment-writer/SKILL.md (from skills/comment-writer/SKILL.md;
-  its frontmatter declares license: Apache-2.0)
+Persona: internal/assets/generic/persona-gentleman.md
+Shipped skill directories:
+- skills/branch-pr/
+- skills/chained-pr/
+- skills/cognitive-doc-design/
+- skills/comment-writer/
+- skills/gentle-ai-bench/
+- skills/gentle-ai-collab-perfect/
+- skills/issue-root-resolution/
+- skills/rdd-advisory-transport/
+- skills/rdd-defect-workflow/
+- skills/systemic-issue-triage/
+- skills/work-unit-commits/
+
+Each skill's own frontmatter license may differ.
