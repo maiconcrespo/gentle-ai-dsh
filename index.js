@@ -5,7 +5,7 @@
 // base, web-app and headless bundles set, and presets shadow it per session.
 import { readFileSync } from 'node:fs'
 import { findOnPath } from './lib/engram.js'
-import { SESSION_START, createSessionProjects, decideEngramWrite, parseSessionStart } from './lib/guard.js'
+import { SESSION_START, createSessionProjects, decideEngramWrite, sessionStartProject } from './lib/guard.js'
 
 export const name = 'gentle-ai'
 export const inject = ['systemPrompt', 'workingDirectory']
@@ -62,8 +62,10 @@ function guardEngramWrites(ctx) {
 
   ctx.on('tools/result', (exec, result) => {
     if (exec.name !== SESSION_START) return
-    const directory = exec.arguments?.directory ?? exec.arguments?.cwd ?? cwdOf(exec.agent)
-    projectsOf(exec.agent)?.record(directory, parseSessionStart(result))
+    // Never infer the directory from the session cwd: an omitted directory
+    // makes Engram use its launch directory (review finding R3).
+    const directory = exec.arguments?.directory ?? exec.arguments?.cwd
+    projectsOf(exec.agent)?.record(directory, sessionStartProject(result, directory))
   })
 
   ctx.on('tools/pre-execute', async (exec, next) => {

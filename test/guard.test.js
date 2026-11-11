@@ -105,3 +105,17 @@ test('pre-execute denies without next(), allows through next() after a recorded 
   assert.deepEqual(await handlers['tools/pre-execute']({ name: 'bash', arguments: {}, agent }, next), { kind: 'allow' })
   assert.equal(nextCalls, 2)
 })
+
+test('a session start without an explicit matching directory is not recorded (review R3)', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'guard-test-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  writeFileSync(join(dir, 'engram'), '')
+  chmodSync(join(dir, 'engram'), 0o755)
+  const { handlers, agent } = fakeCtx({ PATH: dir })
+  const next = async () => ({ kind: 'allow' })
+  const save = { name: 'mcp__engram__mem_save', arguments: { project: 'deepseek-harness' }, agent }
+  handlers['tools/result']({ name: 'mcp__engram__mem_session_start', arguments: {}, agent }, started('deepseek-harness', '/launch/dir'))
+  assert.equal((await handlers['tools/pre-execute'](save, next)).kind, 'deny')
+  handlers['tools/result']({ name: 'mcp__engram__mem_session_start', arguments: { directory: CWD }, agent }, started('deepseek-harness', '/launch/dir'))
+  assert.equal((await handlers['tools/pre-execute'](save, next)).kind, 'deny')
+})
