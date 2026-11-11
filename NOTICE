@@ -5,7 +5,7 @@ MIT License
 Copyright (c) 2025 Gentleman Programming
 
 Persona: internal/assets/generic/persona-gentleman.md
-Orchestrator: internal/assets/generic/orchestrator.md + internal/assets/skills/_shared/odd-orchestrator-sections.md (rendered for dsh without review/RDD sections)
+Orchestrator: internal/assets/generic/orchestrator.md + internal/assets/skills/_shared/odd-orchestrator-sections.md + internal/components/agentguidance/routing.go + internal/agents/capabilitymanifest/manifest.go (rendered for dsh without review/RDD sections)
 Shipped skill directories:
 - skills/branch-pr/
 - skills/chained-pr/

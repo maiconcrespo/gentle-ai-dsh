@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { renderOrchestrator } from '../lib/orchestrator.js'
+import { assertNoReviewLeaks, renderOrchestrator } from '../lib/orchestrator.js'
 import { sections } from '../index.js'
 
 const shared = [
@@ -71,9 +71,12 @@ test('fails loudly on a missing shared section, leftover markers or review leaks
 test('shipped orchestrator.md is rendered, review-free and registered as a section', () => {
   const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8')
   assert.ok(text.trim().length > 1000)
-  // Faithful v4.4.0 render is ~31 KB; guard against unexpected growth.
-  assert.ok(Buffer.byteLength(text) < 34000, `orchestrator.md is ${Buffer.byteLength(text)} bytes`)
-  for (const leak of ['{{', 'gentle_review', 'Judgment Day', 'RDD', 'native review', 'odd-orchestrator-fragment']) {
+  // Orchestrator + Implementation Routing + dsh adaptation measured 56293 bytes (v4.4.0); guard against unexpected growth.
+  assert.ok(Buffer.byteLength(text) < 60000, `orchestrator.md is ${Buffer.byteLength(text)} bytes`)
+  const adaptationStart = text.indexOf('\n## dsh runtime adaptation\n')
+  assert.ok(adaptationStart > 0, 'dsh runtime adaptation missing')
+  assert.doesNotThrow(() => assertNoReviewLeaks(text.slice(0, adaptationStart)))
+  for (const leak of ['{{', 'gentle_review', 'Judgment Day', 'odd-orchestrator-fragment']) {
     assert.ok(!text.includes(leak), `orchestrator.md contains ${leak}`)
   }
   const orchestrator = sections({ PATH: '' }).find((s) => s.name === 'gentle-ai:orchestrator')
