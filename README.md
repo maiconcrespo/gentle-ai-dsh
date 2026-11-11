@@ -1,16 +1,12 @@
 # gentle-ai-dsh
 
-A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skills and optional Engram memory for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). The ODD/SDD orchestrator is planned for v2.
+A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skills and optional Engram memory for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). It also ships the gentle-ai orchestrator with its ODD workflow.
 
-## V2 contributor handoff (draft)
+## V2 status
 
-The `feat/3-v2` branch contains an experimental orchestrator slice, not a complete
-v2 release. Start with [the v2 plan and handoff](odd/tasks/v2.md) for unit boundaries,
-shared-file ownership, verification evidence and the next developer's checklist.
-The compatibility audit is pending after an explorer quota failure; native review
-approval and real-model v2 behavior proof are also pending. Do not merge or claim
-working automatic delegation from the current unit tests or boot probe alone.
-Web-only role presets and final integration belong to a later PR; issue #3 stays open.
+The gentle-ai orchestrator and its ODD protocol ship as the `gentle-ai:orchestrator` system-prompt section (#9). Explore, worker and verify subagents for `dsh web` (#10) and their integration and docs (#11) are in progress under the tracking issue #3. Contributors: start with [the v2 plan and handoff](odd/tasks/v2.md).
+
+For what the plugin does and what it reuses from gentle-ai, see the [overview](docs/overview.md).
 
 ## Install and remove
 
