@@ -28,7 +28,10 @@ test('installed engram adds a session-project section (issue #4)', (t) => {
   assert.deepEqual(present.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:engram-project'])
   const project = present[1]
   assert.equal(project.interpolate, false)
-  assert.match(project.text, /mem_current_project/)
+  // Engram only accepts an explicit `project` backed by known context; a
+  // session started with `directory` backs a never-seen workspace (issue #4).
+  assert.match(project.text, /mem_session_start/)
+  assert.match(project.text, /`directory`/)
   assert.match(project.text, /current working directory/)
   for (const tool of ['mem_save', 'mem_search', 'mem_context', 'mem_session_summary']) {
     assert.match(project.text, new RegExp(tool))

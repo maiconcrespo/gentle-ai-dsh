@@ -19,9 +19,9 @@ const MISSING = 'Persistent memory (Engram) is not available in this session. Th
 // project explicitly (issue #4).
 const PROJECT = [
   'Engram memory project: the Engram server is shared by every dsh session and its default project is the directory dsh was launched from, not your workspace. Never rely on that default.',
-  'Before your first Engram call in a session, call mem_current_project with `cwd` set to the current working directory from your context, and remember the returned project name.',
-  'Then pass that name as `project` on every Engram call that accepts it, including mem_save, mem_update (as `expected_project`), mem_search, mem_context, mem_session_summary and mem_save_prompt.',
-  'If the current working directory changes, call mem_current_project again.',
+  'Before your first Engram call in a session, call mem_session_start with a new unique `id` (for example dsh- followed by the current timestamp) and `directory` set to the current working directory from your context. Remember the returned project name. Starting the session is what lets Engram accept that project, even for a workspace it has never seen; mem_current_project alone does not.',
+  'Then pass that name as `project` on every Engram call that accepts it, including mem_save, mem_update (as `expected_project`), mem_search, mem_context, mem_session_summary and mem_save_prompt. Never omit `project` to make an error go away: that silently falls back to the wrong project.',
+  'If the current working directory changes, call mem_session_start again for the new directory.',
 ].join('\n')
 
 export function sections(env = process.env) {
