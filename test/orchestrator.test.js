@@ -61,6 +61,15 @@ test('removes the review execution contract and provider defect handoff, and rew
   assert.match(out, /next text/)
 })
 
+test('fails when the review contract has no ending heading', () => {
+  const capable = '# Orchestrator\n#### Review Execution Contract\nreview steps\n#### Other\nremaining text'
+  assert.throws(() => renderOrchestrator(generic(capable), shared, 'dsh'), (error) => {
+    assert.match(error.message, /Review Execution Contract/)
+    assert.match(error.message, /Cost and Context Balance/)
+    return true
+  })
+})
+
 test('fails loudly on a missing shared section, leftover markers or review leaks', () => {
   assert.throws(() => renderOrchestrator(generic('{{GENTLE_AI_ODD_SECTION:Nope}}'), shared, 'dsh'), /Nope/)
   assert.throws(() => renderOrchestrator(generic('{{GENTLE_AI_OTHER}}'), shared, 'dsh'), /placeholder/)

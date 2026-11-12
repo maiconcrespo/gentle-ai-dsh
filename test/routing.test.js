@@ -24,7 +24,9 @@ test('shipped prompt composes orchestrator, routing and dsh adaptation in order'
   const adaptation = text.indexOf('\n## dsh runtime adaptation\n')
   assert.ok(routing > 0 && adaptation > routing)
   assert.equal(text.split('## Implementation Routing').length - 1, 8)
+  assert.equal(text.slice(routing + 1, adaptation + 1), renderRouting(defaultBudgets).trim() + '\n\n')
   assert.ok(text.endsWith(dshRuntimeAdaptation.trim() + '\n'))
+  assert.equal(text, composeOrchestratorPrompt(text.slice(0, routing), renderRouting(defaultBudgets), dshRuntimeAdaptation))
   assert.equal(composeOrchestratorPrompt('first\n', 'second\n', 'third\n'), 'first\n\nsecond\n\nthird\n')
 })
 
