@@ -45,6 +45,8 @@ npm run sync
 npm test
 ```
 
+GitHub Actions runs `npm test` on Linux and Windows for every pull request and every push to `main` (`.github/workflows/test.yml`).
+
 See [content sync](docs/content-sync.md) for details and [spike findings](docs/spike-findings.md) for historical verification. The sync uses Git and network access.
 
 ## License
