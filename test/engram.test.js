@@ -4,9 +4,10 @@ import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { findOnPath } from '../lib/engram.js'
+import { installFakeEngram } from './fake-engram.js'
 import { sections, apply } from '../index.js'
 
-test('finds only executable files on PATH', (t) => {
+test('finds only executable files on PATH', { skip: process.platform === 'win32' && 'POSIX permission bits do not apply on Windows' }, (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'engram-test-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   const file = join(dir, 'engram')
@@ -19,11 +20,24 @@ test('finds only executable files on PATH', (t) => {
   assert.equal(findOnPath('engram', env), file)
 })
 
+test('on Windows, finds the command through PATHEXT and ignores a bare name', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'engram-test-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const env = { PATH: dir, PATHEXT: '.COM;.EXE;.BAT;.CMD' }
+  writeFileSync(join(dir, 'engram'), '')
+  assert.equal(findOnPath('engram', env, 'win32'), null)
+  writeFileSync(join(dir, 'engram.exe'), '')
+  assert.equal(findOnPath('engram', env, 'win32'), join(dir, 'engram.exe'))
+  // Without PATHEXT, the Windows default extensions still apply.
+  assert.equal(findOnPath('engram', { PATH: dir }, 'win32'), join(dir, 'engram.exe'))
+  // A name that already has an executable extension is looked up as given.
+  assert.equal(findOnPath('engram.exe', env, 'win32'), join(dir, 'engram.exe'))
+})
+
 test('installed engram adds a session-project section (issue #4)', (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'engram-test-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
-  writeFileSync(join(dir, 'engram'), '')
-  chmodSync(join(dir, 'engram'), 0o755)
+  installFakeEngram(dir)
   const present = sections({ PATH: dir })
   assert.deepEqual(present.map((s) => s.name), ['gentle-ai:persona', 'gentle-ai:orchestrator', 'gentle-ai:engram-project'])
   const project = present[2]
