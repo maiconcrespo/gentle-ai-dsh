@@ -30,7 +30,7 @@
 // <run>\dsh-home\sessions after every headless run. Variables whose names look
 // like credentials are removed from every child environment. This test never
 // deletes anything: its scratch stays for inspection, and sanitized evidence is
-// written to <run>/evidence for copying into test/c2-replay/evidence.
+// written to <run>/evidence for local inspection; raw logs are not committed.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
