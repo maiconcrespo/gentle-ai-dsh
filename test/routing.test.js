@@ -35,6 +35,6 @@ test('dsh adaptation documents runtime-specific overrides', () => {
 })
 
 test('dsh adaptation describes the enforced role presets', () => {
-  for (const part of ['`agent_preset`', '`gentle-ai-explore` (the default)', '`gentle-ai-worker` get only `glob`, `grep` and `read`', '`gentle-ai-verify` also gets `pwsh`', 'name the exact commands', 'worker is read-only until the edit-surface guard ships', 'no `skill`, Engram or delegation tools', '`subagent_fork` children keep every parent tool']) assert.ok(dshRuntimeAdaptation.includes(part), part)
-  assert.doesNotMatch(dshRuntimeAdaptation, /not installed yet|Pass skill names, not paths, to subagents/)
+  for (const part of ['`agent_preset`', '`gentle-ai-explore` (the default)', '`gentle-ai-worker` get only `glob`, `grep` and `read`', '`gentle-ai-verify` also gets the platform shell, `pwsh` on Windows and `bash` on Linux and macOS', 'not limited by path or command', 'name the exact commands', 'worker is read-only until the edit-surface guard (#16) ships', 'no `skill`, Engram or delegation tools', '`subagent_fork` children keep every parent tool']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  assert.doesNotMatch(dshRuntimeAdaptation, /not installed yet|Pass skill names, not paths, to subagents|also gets `pwsh` for checks/)
 })

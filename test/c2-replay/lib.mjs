@@ -10,7 +10,7 @@ export const sha256 = (data) => createHash('sha256').update(data).digest('hex')
 export const sha256File = (file) => sha256(readFileSync(file))
 
 // A dsh persisted session (session.vN.jsonl.zstd) is a concatenation of zstd
-// frames. Same decoding as the P0 tools/session-dump.mjs reference tool.
+// frames, decoded one frame at a time.
 export function decodeZstdFrames(buf) {
   const magic = Buffer.from([0x28, 0xb5, 0x2f, 0xfd])
   const starts = []

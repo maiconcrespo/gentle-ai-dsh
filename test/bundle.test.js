@@ -22,6 +22,7 @@ test('bundle metadata and shipped content', () => {
   assert.ok(pkg.exports['./package.json'])
   for (const id of ['gentle-ai', 'gentle-ai-skills', 'gentle-ai-engram', 'tool-subagent', 'agent-preset-registry', 'gentle-ai-preset-explore', 'gentle-ai-preset-verify', 'gentle-ai-preset-worker']) assert.match(read('../cordis.patch.yml'), new RegExp(`id: ${id}(?:\\s|$)`))
   assert.ok(pkg.exports['./role-restrict'])
+  assert.ok(pkg.exports['./roles'])
   const dirs = readdirSync(new URL('../skills/', import.meta.url), { withFileTypes: true }).filter((entry) => entry.isDirectory())
   assert.ok(dirs.length)
   for (const dir of dirs) assert.deepEqual(validateSkill(parseFrontmatter(read(`../skills/${dir.name}/SKILL.md`))), [], dir.name)

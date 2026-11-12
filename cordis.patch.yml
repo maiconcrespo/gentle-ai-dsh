@@ -59,7 +59,10 @@
 
     # Each role preset mounts only the restriction plugin: a preset's own
     # tools would be exempt from its restriction, and inherited tools outside
-    # the allowlist become unknown to the child. See lib/role-restrict.js.
+    # the allowlist become unknown to the child. A preset row only names its
+    # role; the allowlists, titles and descriptions live in the shared role
+    # table, lib/roles.js, and tests keep these rows in sync with it. See
+    # lib/role-restrict.js.
     - id: gentle-ai-preset-explore
       name: '@deepseek-ai/dsh-agent-preset'
       config:
@@ -77,7 +80,7 @@
       config:
         id: gentle-ai-verify
         name: gentle-ai verify
-        description: 'Verification subagent role: glob, grep, read and pwsh for checks.'
+        description: 'Verification subagent role: glob, grep, read and the platform shell (pwsh on Windows, bash on Linux and macOS) for checks.'
         plugins:
           - id: role-restrict
             name: gentle-ai-dsh/role-restrict
@@ -85,13 +88,13 @@
               role: verify
 
     # Fail-closed worker: read-only like explore until the edit-surface guard
-    # exists. No edit, write, apply_patch, shell or working_directory here.
+    # (#16) exists. No edit, write, apply_patch, shell or working_directory here.
     - id: gentle-ai-preset-worker
       name: '@deepseek-ai/dsh-agent-preset'
       config:
         id: gentle-ai-worker
         name: gentle-ai worker
-        description: 'Worker subagent role, read-only: edit surfaces pending the guard contribution (C3).'
+        description: 'Worker subagent role, read-only: edit surfaces pending the guard (#16).'
         plugins:
           - id: role-restrict
             name: gentle-ai-dsh/role-restrict

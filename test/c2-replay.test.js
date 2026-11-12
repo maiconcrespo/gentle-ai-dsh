@@ -1,4 +1,4 @@
-// C2 integration evidence (issue #10, odd/tasks/c2-role-presets.md T3).
+// C2 integration evidence (issue #10).
 //
 // Boots the pinned @deepseek-ai/dsh@0.2.2-rc.1 headless runner with the keyless
 // replay provider @deepseek-ai/dsh-llm-replay@0.2.2-rc.1 and this package
@@ -11,9 +11,14 @@
 // tool outside the allowlist answers `unknown tool`, the allowed tools work and
 // the workspace on disk is unchanged.
 //
+// The expected rosters come from the shared role table (lib/roles.js) for the
+// host platform, so the verify role probes `pwsh` on Windows and `bash` on
+// Linux and macOS. Only Windows has run this test; the bash probe arguments
+// below follow the pwsh tool's shape and are unverified against dsh.
+//
 // Not covered: per-role model routing (unverified; agentOptions per tool
 // instance is the only confirmed mechanism), real models, web/ACP profiles,
-// non-Windows hosts.
+// Linux and macOS hosts.
 //
 // Requirements: an existing install of exactly those two packages, found at
 // $C2_DSH_INSTALL, <tmpdir>/c2-dsh/install or <parent of tmpdir>/c2-dsh/install.
@@ -44,14 +49,15 @@ import {
   assistantTexts, extractTgz, findSessionFiles, headerToolNames, listTree, makeSanitizer,
   readSessionEvents, readSessionLines, resultText, sha256File, textEntry, toolEntry,
 } from './c2-replay/lib.mjs'
+import { ROLE_NAMES, roleTools, shellTool } from '../lib/roles.js'
 
 const PIN = '0.2.2-rc.1'
 const REPO = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]+$/, '')
 const OVERLAY = join(REPO, 'test', 'c2-replay', 'replay.patch.yml')
-const ROLES = {
-  explore: ['glob', 'grep', 'read'],
-  verify: ['glob', 'grep', 'pwsh', 'read'],
-  worker: ['glob', 'grep', 'read'],
+// Shell probes per shell tool: one that would write a file, one that prints a marker.
+const SHELL_PROBES = {
+  pwsh: { write: (file) => `Set-Content -Path ${file} -Value x`, print: (marker) => `Write-Output ${marker}` },
+  bash: { write: (file) => `printf x > ${file}`, print: (marker) => `echo ${marker}` },
 }
 const SECRET_NAME = /(API_?KEY|TOKEN|SECRET|PASSW(OR)?D|CREDENTIAL|AUTH)/i
 const DSH_TIMEOUT_MS = 240_000
@@ -79,6 +85,9 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
     return
   }
   const INSTALL = located.dir
+  // Resolved inside the test so an unsupported platform fails this test only.
+  const SHELL = shellTool(process.platform)
+  const ROLES = Object.fromEntries(ROLE_NAMES.map((role) => [role, roleTools(role, process.platform).sort()]))
   const RUN = mkdtempSync(join(tmpdir(), 'c2-replay-'))
   const EVIDENCE = join(RUN, 'evidence')
   const LOGS = join(RUN, 'logs')
@@ -217,7 +226,9 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
     summary.setup.pack = { filename: packed.filename, integrity: packed.integrity, shasum: packed.shasum, entryCount: packed.entryCount, extracted: extracted.length, files: fileHashes }
     const mismatched = fileHashes.filter((f) => !f.matchesWorkingTree)
     if (mismatched.length > 0) throw new Error(`packed files differ from the working tree: ${mismatched.map((f) => f.path).join(', ')}`)
-    if (!fileHashes.some((f) => f.path === 'lib/role-restrict.js')) throw new Error('lib/role-restrict.js is not in the packed bundle')
+    for (const file of ['lib/role-restrict.js', 'lib/roles.js']) {
+      if (!fileHashes.some((f) => f.path === file)) throw new Error(`${file} is not in the packed bundle`)
+    }
 
     // 2. Install the packed bundle and the replay provider into the isolated headless profile.
     const xdg = Object.fromEntries(['CONFIG', 'CACHE', 'STATE', 'DATA'].map((k) => [`XDG_${k}_HOME`, join(RUN, 'xdg', k.toLowerCase())]))
@@ -277,7 +288,7 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
     const subagentTool = (headers.at(-1).data.header?.tools ?? headers.at(-1).data.tools).find((x) => x.name === 'subagent')
     summary.setup.parentRoster = roster
     evidence('parent-roster.json', { toolNames: roster, subagentTool })
-    for (const name of ['glob', 'grep', 'read', 'pwsh', 'write', 'edit', 'subagent']) {
+    for (const name of ['glob', 'grep', 'read', SHELL, 'write', 'edit', 'subagent']) {
       if (!roster.includes(name)) throw new Error(`parent roster lacks ${name}`)
     }
     if (roster.some((n) => n.startsWith('mcp__engram'))) throw new Error('Engram MCP tools are mounted despite the overlay')
@@ -299,13 +310,13 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const hex = randomBytes(4).toString('hex')
       const seed = `C2SEED-${hex}`
       const done = `C2MARK-${role.toUpperCase()}-DONE-${hex}`
-      const pwshMarker = `C2-VERIFY-PWSH-${hex}`
+      const shellMarker = `C2-VERIFY-${SHELL.toUpperCase()}-${hex}`
       const forbidden = roster.filter((n) => !allow.includes(n))
       const extraForbidden = roster.includes('apply_patch') ? [] : ['apply_patch']
       const argsFor = (name) => ({
         write: { file_path: `escape-${role}.txt`, content: 'must not be written\n' },
         edit: { file_path: 'probe/seed.txt', old_string: seed, new_string: `edited-by-${role}` },
-        pwsh: { description: 'write via shell', command: `Set-Content -Path shell-${role}.txt -Value x` },
+        [SHELL]: { description: 'write via shell', command: SHELL_PROBES[SHELL].write(`shell-${role}.txt`) },
         apply_patch: { input: `*** Begin Patch\n*** Add File: patch-${role}.txt\n+x\n*** End Patch\n` },
         working_directory: { cd: 'probe' },
       })[name] ?? {}
@@ -314,7 +325,7 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
         { id: `call_c2_${role}_read`, name: 'read', args: { file_path: 'probe/seed.txt' }, expect: 'ok', contains: seed },
         { id: `call_c2_${role}_glob`, name: 'glob', args: { pattern: '**/*.txt' }, expect: 'ok', contains: 'seed.txt' },
         { id: `call_c2_${role}_grep`, name: 'grep', args: { pattern: 'C2SEED-' }, expect: 'ok', contains: 'seed.txt' },
-        ...(allow.includes('pwsh') ? [{ id: `call_c2_${role}_pwsh`, name: 'pwsh', args: { description: 'print marker', command: `Write-Output ${pwshMarker}` }, expect: 'ok', contains: pwshMarker }] : []),
+        ...(allow.includes(SHELL) ? [{ id: `call_c2_${role}_${SHELL}`, name: SHELL, args: { description: 'print marker', command: SHELL_PROBES[SHELL].print(shellMarker) }, expect: 'ok', contains: shellMarker }] : []),
       ]
       const childScript = [...calls.map((c) => toolEntry(c.id, c.name, c.args)), textEntry(`${done} ${role} child finished`)]
       const info = { preset, seed, done, calls, forbidden, extraForbidden }
@@ -435,7 +446,7 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
     await check(`${role}: every tool outside the allowlist answers unknown tool`, () => {
       const unknown = info.calls.filter((c) => c.expect === 'unknown')
       assert.ok(unknown.length >= info.forbidden.length && info.forbidden.length > 0)
-      if (role === 'worker') for (const n of ['write', 'edit', 'pwsh', 'working_directory', 'subagent', 'apply_patch']) assert.ok(unknown.some((c) => c.name === n), `worker probes ${n}`)
+      if (role === 'worker') for (const n of ['write', 'edit', SHELL, 'working_directory', 'subagent', 'apply_patch']) assert.ok(unknown.some((c) => c.name === n), `worker probes ${n}`)
       for (const c of unknown) {
         const r = cEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === c.id)
         assert.ok(r, `result for ${c.name}`)

@@ -1,4 +1,8 @@
+> **VERIFYING ISOLATION:** Never access `~/.dsh`, including metadata or directory listings. Verify isolation exclusively from the effective `DSH_HOME` in the run logs and the composed configuration. If you think access is needed, do not access it; use those logs instead.
+
 # C2 role presets: replay evidence summary
+
+**Historical result.** This replay ran on Windows against the revision before the shared role table (`lib/roles.js`), when the verify allowlist was `pwsh` on every host. The current revision takes the allowlists from that table and gives verify `bash` on Linux and macOS. It has not been replayed since, and no Linux or macOS host has run the replay; the unit tests in `test/role-presets.test.js` cover the table and the per-platform allowlists without dsh.
 
 The corrected C2 replay passed 27/27 on Windows with the headless profile, and an independent security verification passed. Each role child ran with only its allowlisted tools, and the parent received each child's completion notice. The worker role stays read-only until #16. The verify shell is unrestricted by design. The platforms and models listed under "Not tested" were not covered.
 
@@ -72,7 +76,8 @@ An earlier, pre-correction version of the test passed 26/26 but broke the rule n
 
 ### Not tested
 
-- Hosts other than Windows, including Linux and macOS. With this revision, the verify preset is expected to fail closed there because `pwsh` is missing.
+- Hosts other than Windows, including Linux and macOS. The verify role's `bash` shell there comes from the shared role table and is not replayed. The replay test now probes the host shell from that table, but its `bash` probe arguments are unverified against dsh.
+- The shared role table itself: the replay above predates it.
 - Profiles other than headless, including web and ACP.
 - Real models: only the keyless replay provider ran.
 - Concurrent children and `send_message`. The `subagent` description says that children report through `send_message`, which role children do not have; the completion notice still carried the child's final answer.
