@@ -30,6 +30,8 @@ test('on Windows, finds the command through PATHEXT and ignores a bare name', (t
   assert.equal(findOnPath('engram', env, 'win32'), join(dir, 'engram.exe'))
   // Without PATHEXT, the Windows default extensions still apply.
   assert.equal(findOnPath('engram', { PATH: dir }, 'win32'), join(dir, 'engram.exe'))
+  // A name that already has an executable extension is looked up as given.
+  assert.equal(findOnPath('engram.exe', env, 'win32'), join(dir, 'engram.exe'))
 })
 
 test('installed engram adds a session-project section (issue #4)', (t) => {
