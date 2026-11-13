@@ -15,7 +15,9 @@ test('finds only executable files on PATH', { skip: process.platform === 'win32'
   assert.equal(findOnPath('engram', env), null)
   writeFileSync(file, '')
   chmodSync(file, 0o644)
-  assert.equal(findOnPath('engram', env), null)
+  // Windows has no execute permission bit: chmod only toggles read-only and
+  // X_OK checks existence, so any regular file is executable there.
+  assert.equal(findOnPath('engram', env), process.platform === 'win32' ? file : null)
   chmodSync(file, 0o755)
   assert.equal(findOnPath('engram', env), file)
 })

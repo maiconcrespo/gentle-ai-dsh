@@ -19,7 +19,8 @@ test('routing interpolates all budget fields', () => {
 })
 
 test('shipped prompt composes orchestrator, routing and dsh adaptation in order', () => {
-  const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8')
+  // Compare structure on LF text: a Windows checkout (core.autocrlf) has CRLF line endings.
+  const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
   const routing = text.indexOf('\n## Implementation Routing\n')
   const adaptation = text.indexOf('\n## dsh runtime adaptation\n')
   assert.ok(routing > 0 && adaptation > routing)
@@ -33,4 +34,9 @@ test('shipped prompt composes orchestrator, routing and dsh adaptation in order'
 test('dsh adaptation documents runtime-specific overrides', () => {
   for (const part of ['takes precedence', 'subagent_fork', 'returns immediately', 'empty conversation', 'exact allowed edit surfaces', '<available_skills>', '.atl/skill-registry.md', '_shared/skill-resolver.md', '~/.claude/skills', '~/.config/opencode/skills', '.agents/skills', 'mem_session_start', 'session working directory', 'parent saves', 'mirror is pending', 'independent read-only verifier']) assert.ok(dshRuntimeAdaptation.includes(part), part)
   assert.ok(Buffer.byteLength(dshRuntimeAdaptation) < 2048)
+})
+
+test('dsh adaptation describes the enforced role presets', () => {
+  for (const part of ['`agent_preset`', '`gentle-ai-explore` (the default)', '`gentle-ai-worker` get only `glob`, `grep` and `read`', '`gentle-ai-verify` also gets the platform shell, `pwsh` on Windows and `bash` on Linux and macOS', 'not limited by path or command', 'name the exact commands', 'worker is read-only until the edit-surface guard (#16) ships', 'no `skill`, Engram or delegation tools', '`subagent_fork` children keep every parent tool']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  assert.doesNotMatch(dshRuntimeAdaptation, /not installed yet|Pass skill names, not paths, to subagents|also gets `pwsh` for checks/)
 })

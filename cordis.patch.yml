@@ -1,5 +1,7 @@
-# gentle-ai-dsh bundle layer. Every row is inserted under its own id, so no
-# base row a user may customize is replaced.
+# gentle-ai-dsh bundle layer. Rows are inserted under their own ids, so no
+# base row a user may customize is replaced. The two exceptions are the
+# subagent role wiring at the end: the base `tool-subagent` row and the
+# `agent-preset-registry` row, each explained where it is set.
 - insert:
     # Persona: global system-prompt section (see index.js).
     - id: gentle-ai
@@ -29,3 +31,72 @@
         command: engram
         args: [mcp]
         cwd: !!js process.cwd()
+
+# Subagent roles (#10). The base spawn delegation tool keeps its provider and
+# name, starts every child under the read-only explore role unless the model
+# picks another role through `agent_preset`, and offers only the gentle-ai
+# roles. A patch `config` replaces the whole block, so provider and toolName
+# are restated; `name` makes the patch a no-op if the row is another plugin.
+# Profiles that disable this row (web) keep it disabled.
+- id: tool-subagent
+  name: '@deepseek-ai/dsh-tool-subagent'
+  config:
+    provider: spawn
+    toolName: subagent
+    agentPreset: gentle-ai-explore
+    allowedAgentPresets: [gentle-ai-explore, gentle-ai-verify, gentle-ai-worker]
+
+- insert:
+    # Preset selection needs the agent-presets service. headless and acp ship
+    # no registry; web ships one under this same id. The loader keeps only the
+    # last row per id, so this row replaces web's identical row instead of
+    # adding a second provider. `standard` keeps web's top-level default;
+    # headless and acp never compose a preset for the top-level session.
+    - id: agent-preset-registry
+      name: '@deepseek-ai/dsh-agent-preset-registry'
+      config:
+        default: standard
+
+    # Each role preset mounts only the restriction plugin: a preset's own
+    # tools would be exempt from its restriction, and inherited tools outside
+    # the allowlist become unknown to the child. A preset row only names its
+    # role; the allowlists, titles and descriptions live in the shared role
+    # table, lib/roles.js, and tests keep these rows in sync with it. See
+    # lib/role-restrict.js.
+    - id: gentle-ai-preset-explore
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: gentle-ai-explore
+        name: gentle-ai explore
+        description: 'Read-only subagent role: glob, grep and read.'
+        plugins:
+          - id: role-restrict
+            name: gentle-ai-dsh/role-restrict
+            config:
+              role: explore
+
+    - id: gentle-ai-preset-verify
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: gentle-ai-verify
+        name: gentle-ai verify
+        description: 'Verification subagent role: glob, grep, read and the platform shell (pwsh on Windows, bash on Linux and macOS) for checks.'
+        plugins:
+          - id: role-restrict
+            name: gentle-ai-dsh/role-restrict
+            config:
+              role: verify
+
+    # Fail-closed worker: read-only like explore until the edit-surface guard
+    # (#16) exists. No edit, write, apply_patch, shell or working_directory here.
+    - id: gentle-ai-preset-worker
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: gentle-ai-worker
+        name: gentle-ai worker
+        description: 'Worker subagent role, read-only: edit surfaces pending the guard (#16).'
+        plugins:
+          - id: role-restrict
+            name: gentle-ai-dsh/role-restrict
+            config:
+              role: worker
