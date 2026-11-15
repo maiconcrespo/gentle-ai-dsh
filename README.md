@@ -36,6 +36,31 @@ dsh runs one Engram process for all sessions, started from the directory dsh was
 
 As a hard backstop, the plugin also denies Engram writes (`mem_save`, `mem_update`, `mem_session_summary`, `mem_save_prompt`) that do not pass the project returned by `mem_session_start` for the session's current working directory. The denial message tells the agent the exact call to make and the project to pass, so it can retry correctly. Reads are never blocked.
 
+## Subagent roles
+
+The bundle adds three agent presets and makes the `subagent` tool (in-process spawn) start every child under one of them. The model picks a role through the tool's `agent_preset` parameter; omitting it selects `gentle-ai-explore`.
+
+| `agent_preset` | Tools the child keeps |
+| --- | --- |
+| `gentle-ai-explore` (default) | `glob`, `grep`, `read` |
+| `gentle-ai-verify` | `glob`, `grep`, `read` and the platform shell: `pwsh` on Windows, `bash` on Linux and macOS |
+| `gentle-ai-worker` | `glob`, `grep`, `read` |
+
+The roles come from one shared table, [lib/roles.js](lib/roles.js), exported as `gentle-ai-dsh/roles`. Each entry holds the role name, its preset id, title and description, a role prompt and the allowed tools; `roleTools(role, platform)` resolves the exact allowlist for a host platform. The headless and acp adapter reads it through `gentle-ai-dsh/role-restrict`, and future web or desktop adapters (#17) can read the same table instead of restating the policy. The preset rows in `cordis.patch.yml` only name a role, and tests check that their ids, titles and descriptions match the table. The headless and acp adapter does not inject the role prompt into the child; it is there for adapters that compose a child prompt.
+
+How it is enforced: plugins listed in a dsh preset are added to the tools a child inherits from the host; they never remove any. The only enforcement is `ctx.tools.restrict({ allow })` called from inside the preset, so each role preset mounts exactly one plugin, `gentle-ai-dsh/role-restrict` ([lib/role-restrict.js](lib/role-restrict.js)), and no tool plugins of its own (a preset's own tools are exempt from its restriction). Every other inherited tool, including `write`, `edit`, `skill`, the Engram tools and the delegation tools, is unknown to the child. A missing or unknown role, a verify role on a platform other than Windows, Linux or macOS, or an allowed tool the host does not register, fails the preset, so dsh does not start the child rather than starting it unrestricted.
+
+The worker is fail-closed: it is read-only like explore, with edit surfaces pending the guard (#16). It gets no `edit`, `write`, `apply_patch`, shell or `working_directory` until an edit-surface guard exists that resolves paths against the calling agent's directory; a fixed-directory guard can be bypassed, and shell and `apply_patch` writes are not covered by a path guard at all.
+
+Limits and status:
+
+- Only children started by `subagent` are restricted. The parent session keeps every host tool: headless and acp do not apply presets to the top-level session (`agentPreset` is null), and nothing in this bundle guards the parent's edits. `subagent_fork` children inherit the parent's tools and are not restricted.
+- `gentle-ai-verify` keeps the platform shell for checks, `pwsh` on Windows and `bash` on Linux and macOS. By design, the role does not limit the shell by path or command, so the parent names the exact commands.
+- Per-role model selection unverified; agentOptions per tool instance is the only confirmed mechanism. Role children use the parent's model route.
+- `dsh web`: the web profile disables the host `tool-subagent` row and takes delegation tools from its own presets, which this bundle does not change, so the roles are not offered there. The role presets still appear in its preset list but, from the dsh 0.2.2-rc.1 source, cannot mount there because the web host registers no global `glob`, `grep` or `read`; this is inferred, not run. Until #17 ships the web/desktop adapter, scope the three preset rows off that profile from its own patch layer, and leave `agent-preset-registry` alone: web ships its own row under that id, so disabling it would turn off web's own registry. For example, `$DSH_HOME/profiles/web/cordis.patch.yml` with one `{ id, disabled: true }` row per preset id (`gentle-ai-preset-explore`, `gentle-ai-preset-verify`, `gentle-ai-preset-worker`); `dsh --profile web --dump-config` should then show no role preset rows (inferred from the patch layer's documented semantics; not run). A patch layer only inserts rows or overrides them by id, so the bundle cannot express this scoping itself.
+- To offer presets, headless and acp need the agent-presets registry, which only web ships. The bundle inserts it under web's id and with web's default, `standard`; the loader keeps the last row per id, so web keeps a single registry. This is read from the 0.2.2-rc.1 source, not run. `standard` exists only in web, and headless and acp never compose a preset for the top-level session, so nothing resolves that default there; a caller that asks the registry for a default preset in those profiles gets not-found. Pass an explicit `agent_preset` instead: the `subagent` tool's own default, `gentle-ai-explore`, applies when the model omits the parameter.
+- Runtime status: a replay of this bundle's own presets against `@deepseek-ai/dsh@0.2.2-rc.1`, with the package installed into an isolated headless profile, passed on Windows before the shared role table existed, when verify's shell was `pwsh` on every host. That Windows result is historical: the shared table and the `bash` shell for Linux and macOS have not been replayed, and no Linux or macOS host has run the replay. See [the replay evidence summary](test/evidence/c2-replay.md).
+
 ## Content and tests
 
 Content comes from a pinned gentle-ai ref. To update it, bump `gentleAi.ref` in `package.json`, then run:
