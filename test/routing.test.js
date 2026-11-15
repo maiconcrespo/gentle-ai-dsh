@@ -19,8 +19,7 @@ test('routing interpolates all budget fields', () => {
 })
 
 test('shipped prompt composes orchestrator, routing and dsh adaptation in order', () => {
-  // Compare structure on LF text: a Windows checkout (core.autocrlf) has CRLF line endings.
-  const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
+  const text = readFileSync(new URL('../orchestrator.md', import.meta.url), 'utf8')
   const routing = text.indexOf('\n## Implementation Routing\n')
   const adaptation = text.indexOf('\n## dsh runtime adaptation\n')
   assert.ok(routing > 0 && adaptation > routing)
