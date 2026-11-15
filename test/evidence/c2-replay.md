@@ -68,6 +68,10 @@ An earlier, pre-correction version of the test passed 26/26 but broke the rule n
 - That run is not evidence for the corrected test. The corrected 27/27 replay and the independent verification above are the evidence.
 - The correction removed the reads, the recorded fields and the `statOrNull` import from the test. `statOrNull` remains exported but unused in `test/c2-replay/lib.mjs`.
 
+## Role presets are registered from code
+
+The presets are no longer declarative rows. `index.js` calls `lib/role-presets.js`, which waits for the tools and agent-presets services, offers each role whose common read tools are global on this host, and registers the rest through `agentPresets.register`. The replay above was run in that shape: the composed `--dump-config` must contain the registry row and must not contain any `@deepseek-ai/dsh-agent-preset` row, and the 26 probe checks prove each registered preset exists and restricts its child.
+
 ## Limitations
 
 - **Worker is read-only, pending #16.** Its edit surfaces depend on the guard work tracked in #16, and nothing here tests a guard. The parent's `subagent` tool also exposes `cwd`, which is relevant to #16.
@@ -79,7 +83,7 @@ An earlier, pre-correction version of the test passed 26/26 but broke the rule n
 ### Not tested
 
 - Hosts other than Windows, including Linux and macOS. The verify role's `bash` shell there comes from the shared role table and is not replayed. The replay test now probes the host shell from that table, but its `bash` probe arguments are unverified against dsh.
-- The shared role table itself: the replay above predates it.
+- A host that registers no global `glob`, `grep` or `read`, which is what the registration gate reads before it offers any role. That path is covered by unit tests with a simulated host, not by this replay.
 - Profiles other than headless, including web and ACP.
 - Real models: only the keyless replay provider ran.
 - Concurrent children and `send_message`. The `subagent` description says that children report through `send_message`, which role children do not have; the completion notice still carried the child's final answer.

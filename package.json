@@ -24,6 +24,7 @@
   ],
   "exports": {
     ".": "./index.js",
+    "./role-presets": "./lib/role-presets.js",
     "./role-restrict": "./lib/role-restrict.js",
     "./roles": "./lib/roles.js",
     "./package.json": "./package.json",

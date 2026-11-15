@@ -273,9 +273,13 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
     evidence('dump-config.yml', dump.stdoutText)
     if (dump.exitCode !== 0) throw new Error(`--dump-config exited ${dump.exitCode}`)
     // The `# == gentle-ai-dsh` layer comes only from the bundle list in the profile manifest under the test DSH_HOME.
-    for (const needle of ['# == gentle-ai-dsh', 'gentle-ai-preset-explore', 'gentle-ai-preset-verify', 'gentle-ai-preset-worker', 'gentle-ai-dsh/role-restrict', 'allowedAgentPresets', 'agent-preset-registry', 'llm-replay']) {
+    for (const needle of ['# == gentle-ai-dsh', 'allowedAgentPresets', 'agent-preset-registry', 'llm-replay']) {
       if (!dump.stdoutText.includes(needle)) throw new Error(`--dump-config lacks ${needle}`)
     }
+    // The role presets are registered at start by index.js from lib/roles.js,
+    // so the static composition carries no preset row of its own; the probes
+    // below prove the registered presets exist and restrict.
+    if (dump.stdoutText.includes('@deepseek-ai/dsh-agent-preset\'')) throw new Error('--dump-config still declares a preset row')
 
     // 5. Parent roster: one replayed text turn, read from the persisted request header.
     const rosterRun = headless('setup-05-roster', wsRoster, [textEntry('c2-roster-probe')], { mode: 'read-only', prompt: 'C2 roster probe' })

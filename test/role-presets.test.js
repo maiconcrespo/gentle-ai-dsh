@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import * as plugin from '../lib/role-restrict.js'
+import * as presets from '../lib/role-presets.js'
 import * as roles from '../lib/roles.js'
 import { dshRuntimeAdaptation } from '../lib/dsh-runtime.js'
 
@@ -28,6 +29,22 @@ function block(text, id) {
     end++
   }
   return lines.slice(start, end).filter((line) => !line.trimStart().startsWith('#')).join('\n')
+}
+
+// A host that registers the role tools globally and offers a preset registry.
+function hostContext({ known = new Set([...READ_ONLY, HOST_SHELL].filter(Boolean)), withView = true, platform, disposer } = {}) {
+  const registered = []
+  const warnings = []
+  const ctx = {
+    tools: withView ? { view: () => ({ restrictableNames: known }) } : {},
+    agentPresets: { register: (definition) => { registered.push(definition); return Promise.resolve(disposer ?? (async () => {})) } },
+    effect: (callback) => { ctx.taken.push(callback) },
+    logger: () => ({ warn: (message) => warnings.push(message) }),
+    inject: (deps, callback) => { ctx.injected.push(deps); return callback(ctx) },
+    injected: [],
+    taken: [],
+  }
+  return { ctx, registered, warnings, config: platform ? { platform } : {} }
 }
 
 // ---------- Shared role table (lib/roles.js) ----------
@@ -192,31 +209,101 @@ test('the spawn delegation tool defaults to explore and offers only the role pre
   assert.doesNotMatch(row, /modelSelection|agentOptions|disabled|persona|toolFilter/)
 })
 
-test('each role preset mounts only its restriction plugin', () => {
-  for (const role of ROLES) {
-    const row = block(PATCH, `gentle-ai-preset-${role}`)
-    assert.match(row, /name: '@deepseek-ai\/dsh-agent-preset'/)
-    assert.match(row, new RegExp(`\\n {8}id: gentle-ai-${role}\\n`))
-    assert.match(row, /name: gentle-ai-dsh\/role-restrict\n/)
-    assert.match(row, new RegExp(`^ {14}role: ${role}$`, 'm'))
+test('every mountable role registers a preset whose only plugin is the restriction', () => {
+  const { ctx, registered } = hostContext()
+  const offered = presets.apply(ctx, {})
+  assert.deepEqual(offered, ROLES)
+  assert.deepEqual(registered.map((definition) => definition.id), ROLES.map((role) => roles.ROLES[role].preset))
+  for (const definition of registered) {
+    const role = ROLES.find((name) => roles.ROLES[name].preset === definition.id)
+    const entry = roles.ROLES[role]
+    assert.equal(definition.name, entry.title)
+    assert.equal(definition.description, entry.description)
     // Plugins a preset mounts itself are exempt from its restriction: allow no other plugin.
-    assert.equal(row.split('\n').slice(1).filter((line) => /^\s+- id: /.test(line)).length, 1, `${role} mounts exactly one plugin`)
-    assert.equal(row.match(/name: /g).length, 3, `${role} has preset, display and plugin names only`)
+    assert.deepEqual(definition.plugins, [{ id: 'role-restrict', name: 'gentle-ai-dsh/role-restrict', config: { role } }])
+    assert.doesNotMatch(JSON.stringify(definition), /\b(allow|tools|pwsh|bash|shell)"/, `${role} preset carries no tool policy`)
   }
-  assert.match(block(PATCH, 'gentle-ai-preset-worker'), /edit surfaces pending the guard \(#16\)/)
 })
 
-test('preset rows match the shared role table and carry no allowlist of their own', () => {
-  const presetRows = PATCH.split(/\r?\n/).filter((line) => /^\s*- id: gentle-ai-preset-/.test(line)).map((line) => line.trim().slice('- id: '.length))
-  assert.deepEqual(presetRows, ROLES.map((role) => `gentle-ai-preset-${role}`))
-  for (const role of ROLES) {
-    const entry = roles.ROLES[role]
-    const row = block(PATCH, `gentle-ai-preset-${role}`)
-    assert.match(row, new RegExp(`^ {8}id: ${entry.preset}$`, 'm'))
-    assert.match(row, new RegExp(`^ {8}name: ${entry.title}$`, 'm'))
-    assert.ok(row.split('\n').includes(`        description: '${entry.description}'`), `${role} description matches the table`)
-    assert.doesNotMatch(row, /\b(allow|tools|pwsh|bash|shell)\s*:/, `${role} preset carries no tool policy`)
+test('a host without the role tools mounts no preset and logs one line', () => {
+  const { ctx, registered, warnings } = hostContext({ known: new Set() })
+  assert.deepEqual(presets.apply(ctx, {}), [])
+  assert.deepEqual(registered, [])
+  assert.equal(warnings.length, 1)
+  for (const part of ['explore', 'verify', 'worker', '"glob"', '#17']) assert.ok(warnings[0].includes(part), part)
+})
+
+test('a host without the shared read tools skips every role, keeping the shell out of the gate', () => {
+  // The read tools are common to every role, so their absence is what makes
+  // this host unable to mount the presets. The shell is a platform property: a
+  // host without it fails the verify preset closed at mount, not the gate.
+  const partial = hostContext({ known: new Set(['glob', 'grep']) })
+  assert.deepEqual(presets.apply(partial.ctx, {}), [])
+  assert.equal(partial.warnings.length, 1)
+  assert.match(partial.warnings[0], /"read"/)
+
+  const full = hostContext({ known: new Set(['glob', 'grep', 'read']) })
+  assert.deepEqual(presets.apply(full.ctx, {}), ROLES)
+  assert.deepEqual(full.warnings, [])
+})
+
+test('a platform without a known verify shell keeps the other roles', () => {
+  const { ctx, registered, warnings, config } = hostContext({ platform: 'freebsd' })
+  assert.deepEqual(presets.apply(ctx, config), ['explore', 'worker'])
+  assert.deepEqual(registered.map((definition) => definition.id), ['gentle-ai-explore', 'gentle-ai-worker'])
+  assert.match(warnings[0], /verify: gentle-ai roles: no verify shell for platform "freebsd"/)
+})
+test('the registration waits for the tools and registry services', () => {
+  // A plugin-level inject would keep the whole registration pending on a host
+  // that never activates one of them; core registers nothing until both exist.
+  const { ctx, registered } = hostContext()
+  assert.deepEqual(presets.apply(ctx, {}), ROLES)
+  assert.deepEqual(ctx.injected, [['tools', 'agentPresets']])
+  assert.equal(registered.length, ROLES.length)
+})
+
+test('a context without inject registers nothing instead of throwing', () => {
+  assert.deepEqual(presets.apply({}, {}), [])
+})
+
+test('a host with no tools view mounts nothing rather than assuming it is complete', () => {
+  const { ctx, registered, warnings } = hostContext({ withView: false })
+  assert.deepEqual(presets.apply(ctx, {}), [])
+  assert.deepEqual(registered, [])
+  assert.equal(warnings.length, 1)
+})
+
+test('each registration is disposed with the plugin', async () => {
+  let disposed = 0
+  const { ctx } = hostContext({ disposer: async () => { disposed += 1 } })
+  presets.apply(ctx, {})
+  assert.equal(ctx.taken.length, ROLES.length)
+  for (const effect of ctx.taken) {
+    const dispose = effect()
+    assert.equal(typeof dispose, 'function')
+    await Promise.resolve()
+    await Promise.resolve()
+    dispose()
   }
+  assert.equal(disposed, ROLES.length)
+})
+
+test('the patch declares no preset row and the bundle entry registers them', () => {
+  const rows = PATCH.split(/\r?\n/).filter((line) => /^\s*- id: gentle-ai-preset/.test(line))
+  assert.deepEqual(rows, [], 'no declarative preset or registration row remains')
+  assert.doesNotMatch(PATCH, /@deepseek-ai\/dsh-agent-preset'/, 'no declarative preset rows remain')
+  // A row can only name a package, and the loader resolves that package root,
+  // so the registration is called from index.js instead of a subpath row.
+  assert.match(read('../index.js'), /from '\.\/lib\/role-presets\.js'/)
+  assert.match(read('../index.js'), /applyRolePresets\(ctx, config\)/)
+})
+test('the registration plugin is exported and requires no service at load', async () => {
+  assert.equal(presets.name, 'gentle-ai-role-presets')
+  assert.equal(presets.inject, undefined, 'no plugin-level inject keeps the plugin loaded')
+  const pkg = JSON.parse(read('../package.json'))
+  assert.equal(pkg.exports['./role-presets'], './lib/role-presets.js')
+  const exported = await import('gentle-ai-dsh/role-presets')
+  assert.equal(exported.apply, presets.apply)
 })
 
 test('runtime guidance describes every role and the platform shell', () => {

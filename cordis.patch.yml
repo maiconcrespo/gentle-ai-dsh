@@ -56,47 +56,9 @@
       name: '@deepseek-ai/dsh-agent-preset-registry'
       config:
         default: standard
+    # The role presets themselves are registered from code (index.js with
+    # lib/role-presets.js), not declared here: a composition patch cannot
+    # condition a row on the profile, and a preset row written here would also
+    # exist in web and desktop, where the host registers no global `glob`,
+    # `grep` or `read` and the preset could not mount (#17).
 
-    # Each role preset mounts only the restriction plugin: a preset's own
-    # tools would be exempt from its restriction, and inherited tools outside
-    # the allowlist become unknown to the child. A preset row only names its
-    # role; the allowlists, titles and descriptions live in the shared role
-    # table, lib/roles.js, and tests keep these rows in sync with it. See
-    # lib/role-restrict.js.
-    - id: gentle-ai-preset-explore
-      name: '@deepseek-ai/dsh-agent-preset'
-      config:
-        id: gentle-ai-explore
-        name: gentle-ai explore
-        description: 'Read-only subagent role: glob, grep and read.'
-        plugins:
-          - id: role-restrict
-            name: gentle-ai-dsh/role-restrict
-            config:
-              role: explore
-
-    - id: gentle-ai-preset-verify
-      name: '@deepseek-ai/dsh-agent-preset'
-      config:
-        id: gentle-ai-verify
-        name: gentle-ai verify
-        description: 'Verification subagent role: glob, grep, read and the platform shell (pwsh on Windows, bash on Linux and macOS) for checks.'
-        plugins:
-          - id: role-restrict
-            name: gentle-ai-dsh/role-restrict
-            config:
-              role: verify
-
-    # Fail-closed worker: read-only like explore until the edit-surface guard
-    # (#16) exists. No edit, write, apply_patch, shell or working_directory here.
-    - id: gentle-ai-preset-worker
-      name: '@deepseek-ai/dsh-agent-preset'
-      config:
-        id: gentle-ai-worker
-        name: gentle-ai worker
-        description: 'Worker subagent role, read-only: edit surfaces pending the guard (#16).'
-        plugins:
-          - id: role-restrict
-            name: gentle-ai-dsh/role-restrict
-            config:
-              role: worker
