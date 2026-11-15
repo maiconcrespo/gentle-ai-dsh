@@ -4,9 +4,11 @@
 
 `test/index.js` imports this file, so `npm test` runs it. Without a pinned dsh install it reports the skip and the paths it checked, instead of disappearing from the run.
 
-**Historical result.** This replay ran on Windows against the revision before the shared role table (`lib/roles.js`), when the verify allowlist was `pwsh` on every host. The current revision takes the allowlists from that table and gives verify `bash` on Linux and macOS. It has not been replayed since, and no Linux or macOS host has run the replay; the unit tests in `test/role-presets.test.js` cover the table and the per-platform allowlists without dsh.
+**Current result.** The replay runs in the shape this branch ships: the role presets are registered from code (`index.js` with `lib/role-presets.js`) instead of declared compositions, so the composed `--dump-config` must carry the `agent-preset-registry` row and no `@deepseek-ai/dsh-agent-preset` row, and each preset must still spawn a child that keeps only its allowlist. On Windows it passes 26 of 26 checks against `@deepseek-ai/dsh@0.2.2-rc.1` installed into an isolated headless profile, run on 2026-11-15 and re-run independently the same day.
 
-The corrected C2 replay passed 27/27 on Windows with the headless profile, and an independent security verification passed. Each role child ran with only its allowlisted tools, and the parent received each child's completion notice. The worker role stays read-only until #16. The verify shell is unrestricted by design. The platforms and models listed under "Not tested" were not covered.
+**History.** The earlier 27-check run targeted the revision before the shared role table (`lib/roles.js`), when the verify allowlist was `pwsh` on every host. That run is why the numbers below and the earlier independent verification refer to a different revision from the one this branch ships.
+
+That earlier replay passed 27/27 on Windows with the headless profile, and an independent security verification passed for it. Each role child ran with only its allowlisted tools, and the parent received each child's completion notice. The worker role stays read-only until #16. The verify shell is unrestricted by design. The platforms and models listed under "Not tested" were not covered.
 
 Runner: `test/c2-replay.test.js`, helpers in `test/c2-replay/lib.mjs`, overlay in `test/c2-replay/replay.patch.yml`. The test writes its evidence (command manifest, composed config, session excerpts and disk listings) under its own temporary run directory. That evidence is kept locally and is not part of the repository.
 
@@ -14,11 +16,11 @@ Runner: `test/c2-replay.test.js`, helpers in `test/c2-replay/lib.mjs`, overlay i
 
 | Item | Observed |
 | --- | --- |
-| Command | `node --test test/c2-replay.test.js`, run once on 2026-11-11 against the corrected test |
+| Command | `node --test test/c2-replay.test.js`, and through `npm test`, which imports it; latest run on 2026-11-15 against HEAD of this branch |
 | Host and profile | Windows (win32), dsh headless profile, keyless replay provider |
 | Pins | `@deepseek-ai/dsh` and `@deepseek-ai/dsh-llm-replay` `0.2.2-rc.1` from an existing isolated install; the test fails on any other version |
-| Exit and totals | Exit 0; 27 tests passed (1 parent test and 26 checks), 0 failed, 0 skipped |
-| Independent verification | Passed. The verifier inspected the corrected evidence without rerunning the replay or accessing the real DSH home. |
+| Exit and totals | Exit 0; 26 checks passed, 0 failed, 0 skipped. The earlier revision ran 27 checks against the same probes before the shared role table existed. |
+| Independent verification | Passed on 2026-11-11 for the earlier 27-check revision; that verifier inspected the evidence without rerunning the replay or accessing the real DSH home. It has not been repeated for this shape, only re-run by its author. |
 
 The test installs the package the way a user does: `npm pack` of the working tree, then `dsh plugin --profile headless add --offline` for the packed bundle and the local replay package. Nothing is installed from the network.
 

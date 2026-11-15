@@ -46,7 +46,7 @@ The orchestrator and routing are not hand-copied: `lib/orchestrator.js` and `lib
 
 ## Verification so far
 
-- `npm test`: 23 tests pass.
+- `npm test`: 86 tests, 85 passing and 1 skipped on Windows with a pinned dsh install available, where the C2 replay runs; 60 tests, 58 passing and 2 skipped without one, where the replay reports its skip reason.
 - Isolated `dsh --profile web` boot: persona, orchestrator and Engram sections present; 11 skills; 27 Engram tools.
 - Real-model checks by the user in `dsh web`: persona followed, a skill invoked, memory saved in the right project (v1); ODD small-task flow followed and Engram writes scoped correctly (v2, PR #8).
 
