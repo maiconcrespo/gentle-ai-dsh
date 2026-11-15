@@ -2,6 +2,8 @@
 
 # C2 role presets: replay evidence summary
 
+`test/index.js` imports this file, so `npm test` runs it. Without a pinned dsh install it reports the skip and the paths it checked, instead of disappearing from the run.
+
 **Historical result.** This replay ran on Windows against the revision before the shared role table (`lib/roles.js`), when the verify allowlist was `pwsh` on every host. The current revision takes the allowlists from that table and gives verify `bash` on Linux and macOS. It has not been replayed since, and no Linux or macOS host has run the replay; the unit tests in `test/role-presets.test.js` cover the table and the per-platform allowlists without dsh.
 
 The corrected C2 replay passed 27/27 on Windows with the headless profile, and an independent security verification passed. Each role child ran with only its allowlisted tools, and the parent received each child's completion notice. The worker role stays read-only until #16. The verify shell is unrestricted by design. The platforms and models listed under "Not tested" were not covered.

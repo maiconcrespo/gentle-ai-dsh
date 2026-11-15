@@ -1,4 +1,5 @@
 import './bundle.test.js'
+import './c2-replay.test.js'
 import './engram.test.js'
 import './guard.test.js'
 import './orchestrator.test.js'

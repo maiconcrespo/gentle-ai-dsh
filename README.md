@@ -47,6 +47,8 @@ npm test
 
 GitHub Actions runs `npm test` on Linux and Windows for every pull request and every push to `main` (`.github/workflows/test.yml`).
 
+`npm test` runs `node --test test/`, which with Node 24 resolves to `test/index.js` only, so every test file runs exactly once: on Windows that is 52 tests, 50 passing and 2 skipped, and on Linux 51 passing and 1 skipped. The skips are a POSIX permission-bit check that does not apply on Windows and the C2 replay, which reports its reason and the paths it checked when no pinned dsh install is available. Bare `node --test` discovers each file separately as well, so it runs 106 instead of 52; use `npm test`.
+
 See [content sync](docs/content-sync.md) for details and [spike findings](docs/spike-findings.md) for historical verification. The sync uses Git and network access.
 
 ## License
