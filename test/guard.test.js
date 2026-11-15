@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createSessionProjects, decideEngramWrite, parseSessionStart } from '../lib/guard.js'
 import { apply } from '../index.js'
+import { installFakeEngram } from './fake-engram.js'
 
 const CWD = '/work/ws-1'
 const started = (project, directory = CWD) => ({
@@ -79,16 +80,14 @@ test('hooks are registered only when engram is on PATH', (t) => {
   assert.deepEqual(Object.keys(fakeCtx({ PATH: '' }).handlers), [])
   const dir = mkdtempSync(join(tmpdir(), 'guard-test-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
-  writeFileSync(join(dir, 'engram'), '')
-  chmodSync(join(dir, 'engram'), 0o755)
+  installFakeEngram(dir)
   assert.deepEqual(Object.keys(fakeCtx({ PATH: dir }).handlers).sort(), ['tools/pre-execute', 'tools/result'])
 })
 
 test('pre-execute denies without next(), allows through next() after a recorded session', async (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'guard-test-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
-  writeFileSync(join(dir, 'engram'), '')
-  chmodSync(join(dir, 'engram'), 0o755)
+  installFakeEngram(dir)
   const { handlers, agent } = fakeCtx({ PATH: dir })
   let nextCalls = 0
   const next = async () => { nextCalls++; return { kind: 'allow' } }
@@ -109,8 +108,7 @@ test('pre-execute denies without next(), allows through next() after a recorded 
 test('a session start without an explicit matching directory is not recorded (review R3)', async (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'guard-test-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
-  writeFileSync(join(dir, 'engram'), '')
-  chmodSync(join(dir, 'engram'), 0o755)
+  installFakeEngram(dir)
   const { handlers, agent } = fakeCtx({ PATH: dir })
   const next = async () => ({ kind: 'allow' })
   const save = { name: 'mcp__engram__mem_save', arguments: { project: 'deepseek-harness' }, agent }
