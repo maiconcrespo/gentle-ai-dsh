@@ -34,3 +34,10 @@ test('dsh adaptation documents runtime-specific overrides', () => {
   for (const part of ['takes precedence', 'subagent_fork', 'returns immediately', 'empty conversation', 'exact allowed edit surfaces', '<available_skills>', '.atl/skill-registry.md', '_shared/skill-resolver.md', '~/.claude/skills', '~/.config/opencode/skills', '.agents/skills', 'mem_session_start', 'session working directory', 'parent saves', 'mirror is pending', 'independent read-only verifier']) assert.ok(dshRuntimeAdaptation.includes(part), part)
   assert.ok(Buffer.byteLength(dshRuntimeAdaptation) < 2048)
 })
+
+test('dsh adaptation describes the enforced role presets', () => {
+  for (const part of ['When the `subagent` tool offers `agent_preset`, pick the role with it', 'Otherwise, delegate without it and state the role limits in the prompt', '`gentle-ai-explore` (the default)', '`gentle-ai-worker` get only `glob`, `grep` and `read`', '`gentle-ai-verify` also gets the platform shell, `pwsh` on Windows and `bash` on Linux and macOS', 'not limited by path or command', 'name the exact commands', 'worker is read-only until the edit-surface guard (#16) ships', 'no `skill`, Engram or delegation tools', '`subagent_fork` children keep every parent tool']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  assert.doesNotMatch(dshRuntimeAdaptation, /not installed yet|Pass skill names, not paths, to subagents|also gets `pwsh` for checks/)
+  // The section is global: in profiles without the roles (web, desktop) an unconditional agent_preset makes delegation fail.
+  assert.doesNotMatch(dshRuntimeAdaptation, /Pick the role with `agent_preset`/)
+})

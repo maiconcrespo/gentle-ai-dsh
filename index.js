@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs'
 import { findOnPath } from './lib/engram.js'
 import { SESSION_START, createSessionProjects, decideEngramWrite, sessionStartProject } from './lib/guard.js'
+import { apply as applyRolePresets } from './lib/role-presets.js'
 
 export const name = 'gentle-ai'
 export const inject = ['systemPrompt', 'workingDirectory']
@@ -38,6 +39,9 @@ export function sections(env = process.env) {
 }
 
 export function apply(ctx, config = {}) {
+  // Subagent role presets (#10, #17). Registered from the bundle entry because
+  // a row can only name a package, and the loader resolves that package root.
+  applyRolePresets(ctx, config)
   const descriptors = sections(config.env)
   if (descriptors.some((d) => d.name === 'gentle-ai:engram-missing')) {
     const logger = ctx.logger?.('gentle-ai')

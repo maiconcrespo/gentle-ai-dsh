@@ -1,5 +1,7 @@
-# gentle-ai-dsh bundle layer. Every row is inserted under its own id, so no
-# base row a user may customize is replaced.
+# gentle-ai-dsh bundle layer. Rows are inserted under their own ids, so no
+# base row a user may customize is replaced. The two exceptions are the
+# subagent role wiring at the end: the base `tool-subagent` row and the
+# `agent-preset-registry` row, each explained where it is set.
 - insert:
     # Persona: global system-prompt section (see index.js).
     - id: gentle-ai
@@ -29,3 +31,34 @@
         command: engram
         args: [mcp]
         cwd: !!js process.cwd()
+
+# Subagent roles (#10). The base spawn delegation tool keeps its provider and
+# name, starts every child under the read-only explore role unless the model
+# picks another role through `agent_preset`, and offers only the gentle-ai
+# roles. A patch `config` replaces the whole block, so provider and toolName
+# are restated; `name` makes the patch a no-op if the row is another plugin.
+# Profiles that disable this row (web) keep it disabled.
+- id: tool-subagent
+  name: '@deepseek-ai/dsh-tool-subagent'
+  config:
+    provider: spawn
+    toolName: subagent
+    agentPreset: gentle-ai-explore
+    allowedAgentPresets: [gentle-ai-explore, gentle-ai-verify, gentle-ai-worker]
+
+- insert:
+    # Preset selection needs the agent-presets service. headless and acp ship
+    # no registry; web ships one under this same id. The loader keeps only the
+    # last row per id, so this row replaces web's identical row instead of
+    # adding a second provider. `standard` keeps web's top-level default;
+    # headless and acp never compose a preset for the top-level session.
+    - id: agent-preset-registry
+      name: '@deepseek-ai/dsh-agent-preset-registry'
+      config:
+        default: standard
+    # The role presets themselves are registered from code (index.js with
+    # lib/role-presets.js), not declared here: a composition patch cannot
+    # condition a row on the profile, and a preset row written here would also
+    # exist in web and desktop, where the host registers no global `glob`,
+    # `grep` or `read` and the preset could not mount (#17).
+
