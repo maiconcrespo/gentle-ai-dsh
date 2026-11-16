@@ -4,7 +4,7 @@ A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skill
 
 ## V2 status
 
-The gentle-ai orchestrator and its ODD protocol ship as the `gentle-ai:orchestrator` system-prompt section (#9). Subagents (#10) ship for headless/ACP first and are in review (PR #15); web and desktop follow in #17. Integration and docs (#11) close the tracking issue #3. Contributors: start with [the v2 plan and handoff](odd/tasks/v2.md).
+The gentle-ai orchestrator and its ODD protocol ship as the `gentle-ai:orchestrator` system-prompt section (#9). Subagents (#10, PR #15) ship for headless/ACP; web and desktop follow in #17. Integration and docs (#11) close the tracking issue #3. Contributors: start with [the v2 plan and handoff](odd/tasks/v2.md).
 
 For what the plugin does and what it reuses from gentle-ai, see the [overview](docs/overview.md).
 
