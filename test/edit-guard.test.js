@@ -273,7 +273,7 @@ test('a project directory that no longer exists denies instead of throwing', () 
 test('allowedRoots must be a non-empty list of relative paths without ..', () => {
   for (const config of [undefined, {}, { allowedRoots: [] }, { allowedRoots: 'allowed' }, { allowedRoots: [''] }, { allowedRoots: ['  '] }, { allowedRoots: [42] },
     { allowedRoots: ['/etc'] }, { allowedRoots: ['C:\\Windows'] }, { allowedRoots: ['C:temp'] }, { allowedRoots: ['\\\\server\\share'] }, { allowedRoots: ['\\temp'] },
-    { allowedRoots: ['..'] }, { allowedRoots: ['allowed/../..'] }, { allowedRoots: ['a\\..\\b'] }, { allowedRoots: ['ok', '../up'] }, { allowedRoots: ['a\0b'] }, { allowedRoots: ['.git'] }, { allowedRoots: ['.git/hooks'] }, { allowedRoots: ['sub/.GIT'] }, { allowedRoots: ['.git.'] }]) {
+    { allowedRoots: ['..'] }, { allowedRoots: ['allowed/../..'] }, { allowedRoots: ['a\\..\\b'] }, { allowedRoots: ['ok', '../up'] }, { allowedRoots: ['a\0b'] }, { allowedRoots: ['.git'] }, { allowedRoots: ['.git/hooks'] }, { allowedRoots: ['sub/.GIT'] }, { allowedRoots: ['.git.'] }, { allowedRoots: ['~'] }, { allowedRoots: ['~/src'] }]) {
     const guards = []
     assert.throws(() => apply({ tools: { guard: (callback) => guards.push(callback) } }, config), /^Error: gentle-ai edit-guard: config\.allowedRoots /, JSON.stringify(config))
     assert.equal(guards.length, 0, 'an invalid mount registers no guard')
