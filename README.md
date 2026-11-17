@@ -4,7 +4,7 @@ A [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) persona, skill
 
 ## V2 status
 
-The gentle-ai orchestrator and its ODD protocol ship as the `gentle-ai:orchestrator` system-prompt section (#9). Subagents (#10, PR #15) ship for headless/ACP; web and desktop follow in #17. Integration and docs (#11) close the tracking issue #3. Contributors: start with [the v2 plan and handoff](odd/tasks/v2.md).
+The gentle-ai orchestrator and its ODD protocol ship as the `gentle-ai:orchestrator` system-prompt section (#9). Subagents (#10) ship for headless/ACP first and are in review (PR #15); web and desktop follow in #17. Integration and docs (#11) close the tracking issue #3. Contributors: start with [the v2 plan and handoff](odd/tasks/v2.md).
 
 For what the plugin does and what it reuses from gentle-ai, see the [overview](docs/overview.md).
 
@@ -73,6 +73,8 @@ npm test
 GitHub Actions runs `npm test` on Linux and Windows for every pull request and every push to `main` (`.github/workflows/test.yml`).
 
 `npm test` runs `node --test test/`, which with Node 24 resolves to `test/index.js` only, so every test file runs exactly once. On Windows that is 86 tests, 85 passing and 1 skipped with the pinned dsh install available; without one the replay reports its skip reason and the paths it checked, and the suite is 60 tests, 58 passing and 2 skipped. Those two skips are the C2 replay and a POSIX permission-bit check that does not apply on Windows; CI runs on Linux and Windows without a pinned install. Bare `node --test` discovers each file separately as well, so it reports a much larger, doubled count; use `npm test`.
+
+A composition guard ([test/dsh-composition.test.js](test/dsh-composition.test.js)) pins the rows this bundle inserts and overrides against [test/fixtures/bundle-rows.json](test/fixtures/bundle-rows.json), and keeps the tested dsh release in one place, [test/dsh-pin.mjs](test/dsh-pin.mjs), in agreement with `package.json`, this file, the replay and its evidence. It needs no dsh install, so it runs on every CI leg. It guards composition, not dsh compatibility: only the replay boots dsh.
 
 See [content sync](docs/content-sync.md) for details and [spike findings](docs/spike-findings.md) for historical verification. The sync uses Git and network access.
 
