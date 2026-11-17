@@ -1,6 +1,6 @@
 import test, { after } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import * as guard from '../lib/edit-guard.js'
@@ -192,7 +192,7 @@ test('a .git directory is never writable, while names that only look like it are
     for (const tool of EDIT_TOOLS) {
       const reason = call(tool, { file_path: path })
       assertDenied(reason, { tool, path, cwd: PROJECT, roots: [PROJECT] })
-      assert.match(reason, /inside a \.git directory, which this guard never allows/)
+      assert.match(reason, /inside the git directory,? .*which this guard never allows/)
     }
   }
   for (const path of ['src/.gitkeep', 'docs/git-notes.md', '.gitignore', '.github/workflows/ci.yml', 'allowed/x.git/y']) assert.equal(call('write', { file_path: path }), undefined, path)
@@ -356,5 +356,58 @@ test('a .git directory that is itself a link is denied by the spelling', (t) => 
   const requested = '.git/hooks/pre-commit'
   const reason = call('write', { file_path: requested })
   assertDenied(reason, { tool: 'write', path: requested, cwd: linked, roots: [linked] })
-  assert.match(reason, /\.git directory/, reason)
+  assert.match(reason, /git directory/, reason)
+})
+
+test('the git directory is denied by its real path, so its target name is no way in', (t) => {
+  // A `.git` that is a link hides the name: the hooks live under the target's
+  // ordinary name, and neither spelling says `.git` there.
+  const linked = join(ROOT, 'real-git-project')
+  mkdirSync(join(linked, 'git-target', 'hooks'), { recursive: true })
+  if (!link(join(linked, 'git-target'), join(linked, '.git'))) return t.skip(NO_JUNCTION)
+  const { call } = host({ roots: ['.'], project: linked, cwd: linked })
+  const requested = 'git-target/hooks/pre-commit'
+  const reason = call('write', { file_path: requested })
+  assertDenied(reason, { tool: 'write', path: requested, cwd: linked, roots: [linked] })
+  assert.match(reason, /inside the git directory/, reason)
+  // An ordinary project file stays writable: the rule is the git directory,
+  // not the target's parent.
+  assert.equal(call('write', { file_path: 'notes.txt' }), undefined)
+})
+
+test('a worktree .git file points at a git directory that is denied too', (t) => {
+  const worktree = join(ROOT, 'worktree')
+  // Inside the project on purpose: the git-dir rule, not the roots check, has
+  // to be what denies this write.
+  const gitdir = join(worktree, '.gitdir')
+  mkdirSync(join(gitdir, 'hooks'), { recursive: true })
+  writeFileSync(join(worktree, '.git'), 'gitdir: .gitdir\n')
+  const { call } = host({ roots: ['.'], project: worktree, cwd: worktree })
+  const requested = join(gitdir, 'hooks', 'pre-commit')
+  const reason = call('write', { file_path: requested })
+  assertDenied(reason, { tool: 'write', path: requested, cwd: worktree, roots: [worktree] })
+  assert.match(reason, /inside the git directory/, reason)
+})
+
+test('a file with more than one hard link is not writable through the guard', (t) => {
+  // realpath keeps the in-project name, so a hard link to a file outside would
+  // otherwise pass every check while the write lands on the outside inode.
+  const outside = join(OUTSIDE, 'hard-target.txt')
+  writeFileSync(outside, 'outside\n')
+  const inside = join(ALLOWED, 'hard.txt')
+  try {
+    linkSync(outside, inside)
+  } catch {
+    return t.skip('this host cannot create a hard link')
+  }
+  const { call } = host()
+  for (const tool of EDIT_TOOLS) {
+    const reason = call(tool, { file_path: 'allowed/hard.txt' })
+    assertDenied(reason, { tool, path: 'allowed/hard.txt', cwd: PROJECT })
+    assert.match(reason, /hard links/, reason)
+  }
+  // A fresh file has no link to follow and stays writable.
+  assert.equal(call('write', { file_path: 'allowed/fresh.txt' }), undefined)
+  // The outside file is untouched: the guard denied before the tool ran.
+  assert.equal(readFileSync(outside, 'utf8'), 'outside\n')
 })
