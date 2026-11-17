@@ -324,7 +324,7 @@ test('a path starting with ~ is denied instead of followed into the home directo
   // so the guard cannot place it inside a root and must refuse the spelling.
   const { call } = host()
   // Only a leading tilde is expanded by the host; a `~` further in is an ordinary name.
-  for (const requested of ['~/escape.txt', '~']) {
+  for (const requested of ['~/escape.txt', '~', '~' + String.fromCharCode(92) + 'escape.txt']) {
     const reason = call('write', { file_path: requested })
     assertDenied(reason, { tool: 'write', path: requested, cwd: PROJECT })
     assert.match(reason, /user home directory/, reason)
