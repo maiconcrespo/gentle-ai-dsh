@@ -9,7 +9,11 @@
 // `agent_preset`, and the test checks: the spawn returns at once, the parent
 // gets the background completion notice, the child's exact tool roster, every
 // tool outside the allowlist answers `unknown tool`, the allowed tools work and
-// the workspace on disk is unchanged.
+// the workspace on disk is unchanged. A role that may write (the worker, #16)
+// also creates one file inside its workspace and is denied a write to an
+// absolute path outside it by the edit-surface guard; its disk check then
+// expects exactly that file besides the unchanged seed, and the outside path
+// must not exist.
 //
 // The expected rosters come from the shared role table (lib/roles.js) for the
 // host platform, so the verify role probes `pwsh` on Windows and `bash` on
@@ -43,7 +47,7 @@ import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync, appendFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { homedir, tmpdir } from 'node:os'
-import { basename, dirname, join, resolve, sep } from 'node:path'
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   assistantTexts, extractTgz, findSessionFiles, headerToolNames, listTree, makeSanitizer,
@@ -317,6 +321,13 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const shellMarker = `C2-VERIFY-${SHELL.toUpperCase()}-${hex}`
       const forbidden = roster.filter((n) => !allow.includes(n))
       const extraForbidden = roster.includes('apply_patch') ? [] : ['apply_patch']
+      // Guard probes, only for a role that is offered `write`: the inside file
+      // proves ordinary file creation still works under the guard, and the
+      // outside path is absolute and next to the workspace, so only the guard's
+      // roots (not a relative-path accident) keep it from being written.
+      const writes = allow.includes('write')
+      const created = writes ? { path: `probe/created-${role}.txt`, content: `created-by-${role}-${hex}\n` } : null
+      const outside = writes ? join(RUN, `outside-${role}-${hex}.txt`) : null
       const argsFor = (name) => ({
         write: { file_path: `escape-${role}.txt`, content: 'must not be written\n' },
         edit: { file_path: 'probe/seed.txt', old_string: seed, new_string: `edited-by-${role}` },
@@ -330,9 +341,14 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
         { id: `call_c2_${role}_glob`, name: 'glob', args: { pattern: '**/*.txt' }, expect: 'ok', contains: 'seed.txt' },
         { id: `call_c2_${role}_grep`, name: 'grep', args: { pattern: 'C2SEED-' }, expect: 'ok', contains: 'seed.txt' },
         ...(allow.includes(SHELL) ? [{ id: `call_c2_${role}_${SHELL}`, name: SHELL, args: { description: 'print marker', command: SHELL_PROBES[SHELL].print(shellMarker) }, expect: 'ok', contains: shellMarker }] : []),
+        // After read/glob/grep, so those still see only the seed.
+        ...(writes ? [
+          { id: `call_c2_${role}_write_inside`, name: 'write', args: { file_path: created.path, content: created.content }, expect: 'ok', contains: 'Created file' },
+          { id: `call_c2_${role}_write_outside`, name: 'write', args: { file_path: outside, content: 'must not be written\n' }, expect: 'denied', path: outside },
+        ] : []),
       ]
       const childScript = [...calls.map((c) => toolEntry(c.id, c.name, c.args)), textEntry(`${done} ${role} child finished`)]
-      const info = { preset, seed, done, calls, forbidden, extraForbidden }
+      const info = { preset, seed, done, calls, forbidden, extraForbidden, created, outside: outside && { path: outside } }
       summary.roles[role] = info
 
       // Record the child script as a primary session (read-only) to get the child session log the replay plugin needs.
@@ -342,6 +358,9 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const rec = headless(`${role}-1-record-child`, wsRec, childScript, { mode: 'read-only', prompt: `C2 ${role} child recording` })
       const recSessions = sessionsFor(wsRec)
       info.recording = { exitCode: rec.exitCode, sessions: recSessions.length }
+      // The recording replays the same outside write without the guard; if it
+      // landed there, the absence check after the parent run would prove nothing.
+      if (outside) info.outside.existsAfterRecording = existsSync(outside)
       if (recSessions.length !== 1) throw new Error(`${role} recording: expected 1 session, found ${recSessions.length}`)
       const recAssistant = recSessions[0].events.filter((e) => e.type === 'assistant/message').length
       info.recording.assistantMessages = recAssistant
@@ -364,6 +383,11 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const parent = sessions.find((s) => !s.events[0].parentSession)
       const child = parent && sessions.find((s) => s.events[0].parentSession === parent.events[0].id)
       info.run = { exitCode: main.exitCode, sessions: sessions.length, seedSha, disk: listTree(ws) }
+      if (outside) {
+        const denied = child?.events.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === `call_c2_${role}_write_outside`)
+        info.outside.existsAfterParentRun = existsSync(outside)
+        info.outside.result = denied ? { isError: denied.data.message.isError ?? false, text: resultText(denied) } : null
+      }
       children[role] = { parent, child, main, info, ws, seedSha }
 
       // Sanitized excerpts and raw decoded logs.
@@ -372,7 +396,8 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
           case 'session': return [{ type: e.type, id: e.id, cwd: e.cwd, agentPreset: e.agentPreset ?? null, origin: e.origin ?? null, parentSession: e.parentSession ?? null, delegationDepth: e.delegationDepth }]
           case 'request/header': return [{ type: e.type, seq: e.seq, toolNames: headerToolNames(e) ?? null }]
           case 'tool/call': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.callId, name: e.data?.name, arguments: e.data?.arguments }]
-          case 'tool/result': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.message?.toolCallId, isError: e.data?.message?.isError ?? false, text: truncate(resultText(e), 600) }]
+          // 1200 characters fit a whole edit-guard denial, which names four absolute paths.
+          case 'tool/result': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.message?.toolCallId, isError: e.data?.message?.isError ?? false, text: truncate(resultText(e), 1200) }]
           case 'turn/start': case 'turn/end': case 'agent-preset/selected': case 'subagent/catalog': return [{ type: e.type, seq: e.seq, time: e.time, data: e.data }]
           case 'agent/inbox/spliced': {
             const texts = (e.data?.inserted ?? []).flatMap((m) => (m.content ?? []).filter((c) => c.type === 'text').map((c) => truncate(c.text, 800)))
@@ -394,7 +419,10 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
         evidence(`${role}/raw/child.session.jsonl`, readSessionLines(child.file).join('\n') + '\n')
       }
       evidence(`${role}/raw/recorded-child-fixture.session.jsonl`, readFileSync(childFile, 'utf8'))
-      evidence(`${role}/disk.json`, { workspace: ws, seedSha256Before: seedSha, files: info.run.disk, recordingWorkspace: wsRec, recordingFiles: listTree(wsRec) })
+      evidence(`${role}/disk.json`, {
+        workspace: ws, seedSha256Before: seedSha, files: info.run.disk, recordingWorkspace: wsRec, recordingFiles: listTree(wsRec),
+        ...(created ? { requestedFile: created, outsideWrite: info.outside } : {}),
+      })
     }
   } finally {
     writeEvidence()
@@ -447,15 +475,23 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       assert.ok(rosters.length > 0, 'child request header with tools')
       for (const names of rosters) assert.deepEqual(names, [...ROLES[role]].sort())
     })
-    await check(`${role}: every tool outside the allowlist answers unknown tool`, () => {
+    // dsh runs tools.guard before dispatch, and dispatch is where a hidden tool
+    // answers `unknown tool`. The edit guard mounted in an editing role denies
+    // every tool name it does not know (S4), so there its denial arrives first.
+    const guarded = ROLES[role].includes('write') || ROLES[role].includes('edit')
+    await check(guarded ? `${role}: every tool outside the allowlist is refused by the edit guard` : `${role}: every tool outside the allowlist answers unknown tool`, () => {
       const unknown = info.calls.filter((c) => c.expect === 'unknown')
       assert.ok(unknown.length >= info.forbidden.length && info.forbidden.length > 0)
-      if (role === 'worker') for (const n of ['write', 'edit', SHELL, 'working_directory', 'subagent', 'apply_patch']) assert.ok(unknown.some((c) => c.name === n), `worker probes ${n}`)
+      // The worker is offered write and edit behind the guard (#16), so they are
+      // no longer unknown to it; every tool that could bypass the guard still is.
+      if (role === 'worker') for (const n of [SHELL, 'working_directory', 'subagent', 'apply_patch']) assert.ok(unknown.some((c) => c.name === n), `worker probes ${n}`)
+      if (role === 'worker') for (const n of ['write', 'edit']) assert.ok(!unknown.some((c) => c.name === n), `worker does not expect ${n} to be unknown`)
       for (const c of unknown) {
         const r = cEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === c.id)
         assert.ok(r, `result for ${c.name}`)
         assert.equal(r.data.message.isError, true, `${c.name} is an error`)
-        assert.match(resultText(r), new RegExp(`unknown tool "${c.name}"`), `${c.name} is unknown`)
+        if (guarded) assert.match(resultText(r), new RegExp(`^Error: gentle-ai edit-guard denied "${c.name}": this worker can only call `), `${c.name} is refused by the guard`)
+        else assert.match(resultText(r), new RegExp(`unknown tool "${c.name}"`), `${c.name} is unknown`)
       }
     })
     await check(`${role}: allowed tools work`, () => {
@@ -477,9 +513,34 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const childEnd = cEvents.filter((e) => e.type === 'turn/end').at(-1)
       timing[role] = { parentTurn1End: turnEnds[0].time, childLastTurnEnd: childEnd?.time, notice: notice.time, parentTurnEnds: turnEnds.map((e) => e.time) }
     })
-    await check(`${role}: workspace unchanged on disk`, () => {
+    if (info.created) {
+      await check(`${role}: edit guard denies a write outside the workspace`, () => {
+        const c = info.calls.find((x) => x.expect === 'denied')
+        assert.ok(c, 'outside write probed')
+        assert.ok(isAbsolute(c.path) && !samePath(dirname(c.path), ws), 'outside path is absolute and not in the workspace')
+        const r = cEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === c.id)
+        assert.ok(r, 'result for the outside write')
+        assert.equal(r.data.message.isError, true, 'outside write is an error')
+        const text = resultText(r)
+        assert.doesNotMatch(text, /unknown tool/, 'denied by the guard, not hidden by the preset')
+        assert.match(text, /gentle-ai edit-guard denied "write": .*outside the allowed roots/, `guard denial: ${truncate(text, 300)}`)
+        // The guard prints the requested path JSON-quoted (lib/edit-guard.js show()).
+        assert.ok(text.includes(`Requested path: ${JSON.stringify(c.path)};`), 'denial names the requested path')
+      })
+    }
+    // Explore and verify must leave the workspace untouched; a role that may
+    // write must leave exactly the file it was asked to create.
+    await check(info.created ? `${role}: workspace holds only the requested file and the unchanged seed` : `${role}: workspace unchanged on disk`, () => {
       const files = info.run.disk.filter((f) => f.type === 'file').map((f) => f.path)
-      assert.deepEqual(files, ['probe/seed.txt'])
+      if (info.created) {
+        assert.deepEqual(info.run.disk.map((f) => f.path), ['probe', info.created.path, 'probe/seed.txt'].sort((a, b) => a.localeCompare(b)), 'nothing else appeared')
+        assert.equal(readFileSync(join(ws, info.created.path), 'utf8'), info.created.content)
+        assert.equal(info.outside.existsAfterRecording, false, 'outside path absent after the recording run')
+        assert.equal(info.outside.existsAfterParentRun, false, 'outside path absent after the parent run')
+        assert.equal(existsSync(info.outside.path), false, 'outside path absent now')
+      } else {
+        assert.deepEqual(files, ['probe/seed.txt'])
+      }
       assert.equal(sha256File(join(ws, 'probe', 'seed.txt')), seedSha)
       for (const n of [`escape-${role}.txt`, `shell-${role}.txt`, `patch-${role}.txt`, 'probe/escape-' + role + '.txt']) assert.equal(existsSync(join(ws, n)), false, n)
     })
