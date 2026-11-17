@@ -1,13 +1,10 @@
 {
-  "note": "Composition guard for cordis.patch.yml. Rows the bundle inserts, in the order the loader applies them, and the base rows it overrides. Update this file together with the patch, never on its own.",
-  "profiles": ["headless", "acp"],
-  "insert": [
-    { "id": "gentle-ai", "name": "gentle-ai-dsh" },
-    { "id": "gentle-ai-skills", "name": "@deepseek-ai/dsh-skill-filesystem" },
-    { "id": "gentle-ai-engram", "name": "@deepseek-ai/dsh-mcp-client" },
-    { "id": "agent-preset-registry", "name": "@deepseek-ai/dsh-agent-preset-registry" }
-  ],
-  "override": [
-    { "id": "tool-subagent", "name": "@deepseek-ai/dsh-tool-subagent" }
+  "note": "Composition guard for cordis.patch.yml. The rows this bundle composes, in the exact order the loader applies them: inserts add a row under its own id, overrides replace a base row by id. Update this file together with the patch, never on its own.",
+  "entries": [
+    { "kind": "insert", "id": "gentle-ai", "name": "gentle-ai-dsh" },
+    { "kind": "insert", "id": "gentle-ai-skills", "name": "@deepseek-ai/dsh-skill-filesystem" },
+    { "kind": "insert", "id": "gentle-ai-engram", "name": "@deepseek-ai/dsh-mcp-client" },
+    { "kind": "override", "id": "tool-subagent", "name": "@deepseek-ai/dsh-tool-subagent" },
+    { "kind": "insert", "id": "agent-preset-registry", "name": "@deepseek-ai/dsh-agent-preset-registry" }
   ]
 }
