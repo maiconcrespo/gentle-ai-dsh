@@ -11,6 +11,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const PATCH = read('../cordis.patch.yml')
 const ROLES = ['explore', 'verify', 'worker']
 const READ_ONLY = ['glob', 'grep', 'read']
+const WORKER = [...READ_ONLY, 'edit', 'write']
 const SHELLS = { win32: 'pwsh', linux: 'bash', darwin: 'bash' }
 const HOST_SHELL = SHELLS[process.platform]
 
@@ -62,10 +63,13 @@ test('the shared role table names each role with its preset, prompt and tools', 
     assert.equal(entry.preset, `gentle-ai-${role}`)
     assert.equal(entry.title, `gentle-ai ${role}`)
     for (const field of ['description', 'prompt']) assert.ok(typeof entry[field] === 'string' && entry[field].trim().length > 0, `${role} ${field}`)
-    assert.deepEqual(entry.tools, READ_ONLY)
+    assert.deepEqual(entry.tools, role === 'worker' ? WORKER : READ_ONLY)
     assert.equal(entry.shell, role === 'verify')
+    assert.deepEqual(entry.allowedRoots, role === 'worker' ? ['.'] : undefined)
   }
-  assert.match(roles.ROLES.worker.prompt, /#16/)
+  assert.ok(Object.isFrozen(roles.ROLES.worker.allowedRoots))
+  for (const part of [/#16/, /write and edit/, /inside the project directory/, /\.git/, /no shell and no apply_patch/]) assert.match(roles.ROLES.worker.prompt, part)
+  for (const part of [/write and edit inside the project only/, /no shell or apply_patch/]) assert.match(roles.ROLES.worker.description, part)
   assert.match(roles.ROLES.verify.prompt, /not limited by path/)
 })
 
@@ -83,7 +87,7 @@ test('an unsupported platform has no verify shell', () => {
 test('roleTools resolves each role allowlist per platform', () => {
   for (const platform of Object.keys(SHELLS)) {
     assert.deepEqual(roles.roleTools('explore', platform), READ_ONLY, `explore ${platform}`)
-    assert.deepEqual(roles.roleTools('worker', platform), READ_ONLY, `worker ${platform}`)
+    assert.deepEqual(roles.roleTools('worker', platform), WORKER, `worker ${platform}`)
     assert.deepEqual(roles.roleTools('verify', platform), [...READ_ONLY, SHELLS[platform]], `verify ${platform}`)
   }
   // Read-only roles need no shell, so they resolve on any platform.
@@ -97,11 +101,14 @@ test('roleTools resolves each role allowlist per platform', () => {
   assert.deepEqual(roles.roleTools('explore', 'linux'), READ_ONLY, 'each call returns a fresh copy')
 })
 
-test('the worker stays read-only and no role gets write or delegation tools on any platform', () => {
+test('only the worker edits, and no role gets apply_patch, a cwd change or delegation tools on any platform', () => {
+  assert.deepEqual([...roles.EDIT_TOOLS], ['edit', 'write'])
+  assert.equal(roles.READ_TOOLS, roles.ROLES.explore.tools)
   for (const platform of Object.keys(SHELLS)) {
     for (const role of ROLES) {
       const tools = roles.roleTools(role, platform)
-      for (const name of ['edit', 'write', 'apply_patch', 'working_directory', 'subagent', 'subagent_fork', 'skill']) assert.ok(!tools.includes(name), `${role} ${platform} lacks ${name}`)
+      for (const name of ['apply_patch', 'working_directory', 'subagent', 'subagent_fork', 'skill']) assert.ok(!tools.includes(name), `${role} ${platform} lacks ${name}`)
+      if (role !== 'worker') for (const name of ['edit', 'write']) assert.ok(!tools.includes(name), `${role} ${platform} lacks ${name}`)
     }
     assert.ok(!roles.roleTools('worker', platform).includes(SHELLS[platform]), `worker ${platform} has no shell`)
   }
@@ -111,7 +118,7 @@ test('the worker stays read-only and no role gets write or delegation tools on a
 
 for (const [role, allow] of Object.entries({
   explore: READ_ONLY,
-  worker: READ_ONLY,
+  worker: WORKER,
   verify: [...READ_ONLY, HOST_SHELL],
 })) {
   test(`${role} installs its exact restriction`, () => {
@@ -190,6 +197,14 @@ test('the package exports the plugin under the name the presets use', async () =
   assert.equal(exported.apply, apply)
 })
 
+test('the package exports the edit guard under the name the worker preset uses', async () => {
+  const pkg = JSON.parse(read('../package.json'))
+  assert.equal(pkg.exports['./edit-guard'], './lib/edit-guard.js')
+  const exported = await import('gentle-ai-dsh/edit-guard')
+  const local = await import('../lib/edit-guard.js')
+  assert.equal(exported.apply, local.apply)
+})
+
 test('the package exports the shared role table for other adapters', async () => {
   const pkg = JSON.parse(read('../package.json'))
   assert.equal(pkg.exports['./roles'], './lib/roles.js')
@@ -209,7 +224,7 @@ test('the spawn delegation tool defaults to explore and offers only the role pre
   assert.doesNotMatch(row, /modelSelection|agentOptions|disabled|persona|toolFilter/)
 })
 
-test('every mountable role registers a preset whose only plugin is the restriction', () => {
+test('every mountable role registers a preset with the restriction, and the worker adds the edit guard', () => {
   const { ctx, registered } = hostContext()
   const offered = presets.apply(ctx, {})
   assert.deepEqual(offered, ROLES)
@@ -219,9 +234,37 @@ test('every mountable role registers a preset whose only plugin is the restricti
     const entry = roles.ROLES[role]
     assert.equal(definition.name, entry.title)
     assert.equal(definition.description, entry.description)
-    // Plugins a preset mounts itself are exempt from its restriction: allow no other plugin.
-    assert.deepEqual(definition.plugins, [{ id: 'role-restrict', name: 'gentle-ai-dsh/role-restrict', config: { role } }])
+    // Tools a preset registers itself are exempt from its restriction, so the
+    // only plugins allowed are the two that register none.
+    const expected = [{ id: 'role-restrict', name: 'gentle-ai-dsh/role-restrict', config: { role } }]
+    if (role === 'worker') expected.push({ id: 'edit-guard', name: 'gentle-ai-dsh/edit-guard', config: { allowedRoots: ['.'] } })
+    assert.deepEqual(definition.plugins, expected)
     assert.doesNotMatch(JSON.stringify(definition), /\b(allow|tools|pwsh|bash|shell)"/, `${role} preset carries no tool policy`)
+  }
+  // The roots come from the table, as a copy the registry cannot freeze or share.
+  const worker = registered.find((definition) => definition.id === 'gentle-ai-worker')
+  assert.notEqual(worker.plugins[1].config.allowedRoots, roles.ROLES.worker.allowedRoots)
+})
+
+test('the edit guard mounts with the roots from the table and denies outside them', async () => {
+  const { apply: applyGuard } = await import('../lib/edit-guard.js')
+  const config = presets.definition('worker').plugins.find((plugin) => plugin.id === 'edit-guard').config
+  const guards = []
+  applyGuard({ tools: { guard: (callback) => guards.push(callback) }, get: () => undefined }, config)
+  assert.equal(guards.length, 1)
+  // No working-directory service in this fake host: an edit is denied, never allowed by default.
+  assert.match(guards[0]({ name: 'write', arguments: { file_path: 'x' }, agent: { session: {} } }), /^gentle-ai edit-guard denied "write"/)
+  assert.equal(guards[0]({ name: 'read', arguments: { file_path: 'x' } }), undefined)
+})
+
+test('a role with edit tools and no roots cannot be defined', () => {
+  // definition() reads the frozen table, so the refusal is pinned in its source.
+  const source = read('../lib/role-presets.js')
+  assert.match(source, /has edit tools but no allowedRoots; refusing an unguarded preset/)
+  for (const role of ROLES) {
+    const plugins = presets.definition(role).plugins
+    const edits = roles.ROLES[role].tools.some((tool) => roles.EDIT_TOOLS.includes(tool))
+    assert.equal(plugins.some((plugin) => plugin.id === 'edit-guard'), edits, role)
   }
 })
 
@@ -308,7 +351,7 @@ test('the registration plugin is exported and requires no service at load', asyn
 
 test('runtime guidance describes every role and the platform shell', () => {
   for (const role of ROLES) assert.ok(dshRuntimeAdaptation.includes(`\`${roles.ROLES[role].preset}\``), role)
-  for (const part of ['`pwsh` on Windows', '`bash` on Linux and macOS', 'not limited by path', 'read-only until the edit-surface guard (#16) ships']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  for (const part of ['`pwsh` on Windows', '`bash` on Linux and macOS', 'not limited by path', '`gentle-ai-worker` also gets `write` and `edit` inside the project, never `.git`', "the guard (#16) limits it to the project, not to them"]) assert.ok(dshRuntimeAdaptation.includes(part), part)
 })
 
 test('PR-facing files name #16 and cite no removed evidence or out-of-repo tools', () => {
