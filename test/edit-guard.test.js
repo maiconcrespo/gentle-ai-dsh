@@ -411,3 +411,19 @@ test('a file with more than one hard link is not writable through the guard', (t
   // The outside file is untouched: the guard denied before the tool ran.
   assert.equal(readFileSync(outside, 'utf8'), 'outside\n')
 })
+
+test('a nested repository gets its git directory denied too', (t) => {
+  // The root check would never look at project/nested/.git: a nested repo has
+  // its own hooks, and its .git can be a link to an ordinary name as well.
+  const project = join(ROOT, 'nested-project')
+  mkdirSync(join(project, 'nested', 'git-target', 'hooks'), { recursive: true })
+  mkdirSync(join(project, 'nested', 'src'), { recursive: true })
+  if (!link(join(project, 'nested', 'git-target'), join(project, 'nested', '.git'))) return t.skip(NO_JUNCTION)
+  const { call } = host({ roots: ['.'], project, cwd: project })
+  const requested = 'nested/git-target/hooks/pre-commit'
+  const reason = call('write', { file_path: requested })
+  assertDenied(reason, { tool: 'write', path: requested, cwd: project, roots: [project] })
+  assert.match(reason, /inside the git directory/, reason)
+  // Ordinary files in the nested repository stay writable.
+  assert.equal(call('write', { file_path: 'nested/src/ok.txt' }), undefined)
+})
