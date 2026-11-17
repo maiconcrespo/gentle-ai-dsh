@@ -318,3 +318,43 @@ test('edit-guard takes its tool lists from the shared role table only', () => {
   assert.deepEqual(EDIT_TOOLS, ['edit', 'write'])
   for (const tool of ['apply_patch', 'pwsh', 'bash', 'working_directory']) assert.ok(!EDIT_TOOLS.includes(tool) && !READ_TOOLS.includes(tool), tool)
 })
+
+test('a path starting with ~ is denied instead of followed into the home directory', () => {
+  // The host expands a leading ~ to the user home before it resolves anything,
+  // so the guard cannot place it inside a root and must refuse the spelling.
+  const { call } = host()
+  // Only a leading tilde is expanded by the host; a `~` further in is an ordinary name.
+  for (const requested of ['~/escape.txt', '~']) {
+    const reason = call('write', { file_path: requested })
+    assertDenied(reason, { tool: 'write', path: requested, cwd: PROJECT })
+    assert.match(reason, /user home directory/, reason)
+  }
+})
+
+test('.. after a link is resolved physically, so a link cannot carry the path outside', (t) => {
+  if (!JUNCTION) return t.skip(NO_JUNCTION)
+  const { call } = host()
+  // allowed/link points at OUTSIDE, so on POSIX link/.. is its physical parent,
+  // not the directory that holds the link: a lexical check would call this a
+  // miss and let the write out. Windows normalises `..` lexically before the
+  // filesystem sees it, so there the same spelling lands inside the root and
+  // matches what the host does.
+  const requested = 'allowed/link/../escape.txt'
+  if (process.platform === 'win32') assert.equal(call('write', { file_path: requested }), undefined)
+  else assertDenied(call('write', { file_path: requested }), { tool: 'write', path: requested, cwd: PROJECT })
+  // Without a link, the same spelling stays inside and is still allowed.
+  assert.equal(call('write', { file_path: 'allowed/../allowed/ok.txt' }), undefined)
+})
+
+test('a .git directory that is itself a link is denied by the spelling', (t) => {
+  // Resolving first would lose the name: the realpath of a linked .git has no
+  // .git segment, while git still follows it and runs the hook it finds.
+  const linked = join(ROOT, 'linked-project')
+  mkdirSync(join(linked, 'git-target', 'hooks'), { recursive: true })
+  if (!link(join(linked, 'git-target'), join(linked, '.git'))) return t.skip(NO_JUNCTION)
+  const { call } = host({ roots: ['.'], project: linked, cwd: linked })
+  const requested = '.git/hooks/pre-commit'
+  const reason = call('write', { file_path: requested })
+  assertDenied(reason, { tool: 'write', path: requested, cwd: linked, roots: [linked] })
+  assert.match(reason, /\.git directory/, reason)
+})
