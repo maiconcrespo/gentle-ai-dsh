@@ -33,7 +33,7 @@ function block(text, id) {
 }
 
 // A host that registers the role tools globally and offers a preset registry.
-function hostContext({ known = new Set([...READ_ONLY, HOST_SHELL].filter(Boolean)), withView = true, platform, disposer } = {}) {
+function hostContext({ known = new Set([...WORKER, HOST_SHELL].filter(Boolean)), withView = true, platform, disposer } = {}) {
   const registered = []
   const warnings = []
   const ctx = {
@@ -277,17 +277,35 @@ test('a host without the role tools mounts no preset and logs one line', () => {
 })
 
 test('a host without the shared read tools skips every role, keeping the shell out of the gate', () => {
-  // The read tools are common to every role, so their absence is what makes
-  // this host unable to mount the presets. The shell is a platform property: a
-  // host without it fails the verify preset closed at mount, not the gate.
-  const partial = hostContext({ known: new Set(['glob', 'grep']) })
+  // The read tools are in every role's allowlist, so their absence skips them
+  // all. The shell is a platform property: a host without it fails the verify
+  // preset closed at mount, not the gate, so no shell is in these sets.
+  const partial = hostContext({ known: new Set(['glob', 'grep', 'edit', 'write']) })
   assert.deepEqual(presets.apply(partial.ctx, {}), [])
   assert.equal(partial.warnings.length, 1)
   assert.match(partial.warnings[0], /"read"/)
 
-  const full = hostContext({ known: new Set(['glob', 'grep', 'read']) })
+  const full = hostContext({ known: new Set(WORKER) })
   assert.deepEqual(presets.apply(full.ctx, {}), ROLES)
   assert.deepEqual(full.warnings, [])
+})
+
+test('a host with the read tools but without write offers explore and verify but not the worker', () => {
+  // Offering the worker here would register a preset whose allowlist names a
+  // tool the host lacks, so the child would fail to mount.
+  const { ctx, registered, warnings } = hostContext({ known: new Set([...READ_ONLY, 'edit', HOST_SHELL].filter(Boolean)) })
+  assert.deepEqual(presets.apply(ctx, {}), ['explore', 'verify'])
+  assert.deepEqual(registered.map((definition) => definition.id), ['gentle-ai-explore', 'gentle-ai-verify'])
+  assert.equal(warnings.length, 1)
+  assert.match(warnings[0], /^gentle-ai skipped 1 of 3 subagent role presets on this host \(worker: no global tool "write"\); the host may register the role tools per agent instead, see #17$/)
+  assert.doesNotMatch(warnings[0], /"edit"|explore:|verify:/)
+})
+
+test('a host with every role tool offers all three roles and logs nothing', () => {
+  const { ctx, registered, warnings } = hostContext({ known: new Set([...WORKER, HOST_SHELL].filter(Boolean)) })
+  assert.deepEqual(presets.apply(ctx, {}), ROLES)
+  assert.deepEqual(registered.map((definition) => definition.id), ROLES.map((role) => roles.ROLES[role].preset))
+  assert.deepEqual(warnings, [])
 })
 
 test('a platform without a known verify shell keeps the other roles', () => {

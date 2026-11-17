@@ -4,16 +4,23 @@
 // replay provider @deepseek-ai/dsh-llm-replay@0.2.2-rc.1 and this package
 // installed into an isolated profile the way a user installs it:
 // `npm pack` of the working tree, then `dsh plugin --profile headless add`.
-// For each role (explore, verify, fail-closed worker) a parent session spawns
-// one child through the bundle's `subagent` tool with an explicit
-// `agent_preset`, and the test checks: the spawn returns at once, the parent
-// gets the background completion notice, the child's exact tool roster, every
-// tool outside the allowlist answers `unknown tool`, the allowed tools work and
-// the workspace on disk is unchanged. A role that may write (the worker, #16)
-// also creates one file inside its workspace and is denied a write to an
-// absolute path outside it by the edit-surface guard; its disk check then
-// expects exactly that file besides the unchanged seed, and the outside path
-// must not exist.
+// For each role (explore, verify, and the worker that edits behind the
+// edit-surface guard of #16) a parent session spawns one child through the
+// bundle's `subagent` tool with an explicit `agent_preset`, and the test
+// checks: the spawn returns at once, the parent gets the background completion
+// notice, the child's exact tool roster, every tool outside the allowlist is
+// refused (`unknown tool` for explore and verify, the guard's denial for the
+// worker), and the allowed tools work. Explore and verify must leave their
+// workspace unchanged on disk. The worker creates one file with `write` and
+// changes the seed with `edit` inside its workspace, and is denied a `write` to
+// an absolute path outside it; its disk check expects exactly the created file
+// and the edited seed, and the outside path must not exist.
+//
+// One more worker child is spawned with `subagent`'s `cwd` set to a directory
+// outside the workspace. Its current directory moves there while the guard's
+// allowed roots stay anchored to the project, so its relative `write` must be
+// denied, the denial must name the moved cwd and the unmoved roots, and the
+// outside directory must stay empty.
 //
 // The expected rosters come from the shared role table (lib/roles.js) for the
 // host platform, so the verify role probes `pwsh` on Windows and `bash` on
@@ -312,6 +319,28 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
 
   // ---------- Probes: one parent run per role ----------
   const children = {}
+  let moved
+  // Sanitized excerpt of a session log for the evidence directory.
+  const excerpt = (events) => events.flatMap((e) => {
+    switch (e.type) {
+      case 'session': return [{ type: e.type, id: e.id, cwd: e.cwd, agentPreset: e.agentPreset ?? null, origin: e.origin ?? null, parentSession: e.parentSession ?? null, delegationDepth: e.delegationDepth }]
+      case 'request/header': return [{ type: e.type, seq: e.seq, toolNames: headerToolNames(e) ?? null }]
+      case 'tool/call': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.callId, name: e.data?.name, arguments: e.data?.arguments }]
+      // 1200 characters fit a whole edit-guard denial, which names four absolute paths.
+      case 'tool/result': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.message?.toolCallId, isError: e.data?.message?.isError ?? false, text: truncate(resultText(e), 1200) }]
+      // The cwd change is what the moved-cwd worker case is about, so it is kept.
+      case 'turn/start': case 'turn/end': case 'agent-preset/selected': case 'subagent/catalog': case 'working-directory/change': return [{ type: e.type, seq: e.seq, time: e.time, data: e.data }]
+      case 'agent/inbox/spliced': {
+        const texts = (e.data?.inserted ?? []).flatMap((m) => (m.content ?? []).filter((c) => c.type === 'text').map((c) => truncate(c.text, 800)))
+        return texts.length ? [{ type: e.type, seq: e.seq, time: e.time, texts }] : []
+      }
+      case 'assistant/message': {
+        const content = e.data?.message?.content ?? []
+        return [{ type: e.type, seq: e.seq, time: e.time, text: content.filter((c) => c.type === 'text').map((c) => c.text).join(''), toolCalls: content.filter((c) => c.type === 'tool-call').map((c) => c.name) }]
+      }
+      default: return []
+    }
+  }).map((o) => JSON.stringify(o)).join('\n') + '\n'
   try {
     for (const [role, allow] of Object.entries(ROLES)) {
       const preset = `gentle-ai-${role}`
@@ -327,6 +356,9 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       // roots (not a relative-path accident) keep it from being written.
       const writes = allow.includes('write')
       const created = writes ? { path: `probe/created-${role}.txt`, content: `created-by-${role}-${hex}\n` } : null
+      // The seed exists in every workspace, so editing it proves the guard lets
+      // an ordinary in-place change through, not only a new file.
+      const edited = allow.includes('edit') ? { path: 'probe/seed.txt', content: `edited-by-${role}-${hex}\n` } : null
       const outside = writes ? join(RUN, `outside-${role}-${hex}.txt`) : null
       const argsFor = (name) => ({
         write: { file_path: `escape-${role}.txt`, content: 'must not be written\n' },
@@ -344,11 +376,16 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
         // After read/glob/grep, so those still see only the seed.
         ...(writes ? [
           { id: `call_c2_${role}_write_inside`, name: 'write', args: { file_path: created.path, content: created.content }, expect: 'ok', contains: 'Created file' },
+        ] : []),
+        ...(edited ? [
+          { id: `call_c2_${role}_edit_inside`, name: 'edit', args: { file_path: edited.path, old_string: seed, new_string: edited.content.trimEnd() }, expect: 'ok', contains: 'has been updated successfully' },
+        ] : []),
+        ...(writes ? [
           { id: `call_c2_${role}_write_outside`, name: 'write', args: { file_path: outside, content: 'must not be written\n' }, expect: 'denied', path: outside },
         ] : []),
       ]
       const childScript = [...calls.map((c) => toolEntry(c.id, c.name, c.args)), textEntry(`${done} ${role} child finished`)]
-      const info = { preset, seed, done, calls, forbidden, extraForbidden, created, outside: outside && { path: outside } }
+      const info = { preset, seed, done, calls, forbidden, extraForbidden, created, edited, outside: outside && { path: outside } }
       summary.roles[role] = info
 
       // Record the child script as a primary session (read-only) to get the child session log the replay plugin needs.
@@ -382,7 +419,7 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       const sessions = sessionsFor(ws)
       const parent = sessions.find((s) => !s.events[0].parentSession)
       const child = parent && sessions.find((s) => s.events[0].parentSession === parent.events[0].id)
-      info.run = { exitCode: main.exitCode, sessions: sessions.length, seedSha, disk: listTree(ws) }
+      info.run = { exitCode: main.exitCode, sessions: sessions.length, seedSha, seedAfter: readFileSync(join(ws, 'probe', 'seed.txt'), 'utf8'), disk: listTree(ws) }
       if (outside) {
         const denied = child?.events.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === `call_c2_${role}_write_outside`)
         info.outside.existsAfterParentRun = existsSync(outside)
@@ -391,25 +428,6 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       children[role] = { parent, child, main, info, ws, seedSha }
 
       // Sanitized excerpts and raw decoded logs.
-      const excerpt = (events) => events.flatMap((e) => {
-        switch (e.type) {
-          case 'session': return [{ type: e.type, id: e.id, cwd: e.cwd, agentPreset: e.agentPreset ?? null, origin: e.origin ?? null, parentSession: e.parentSession ?? null, delegationDepth: e.delegationDepth }]
-          case 'request/header': return [{ type: e.type, seq: e.seq, toolNames: headerToolNames(e) ?? null }]
-          case 'tool/call': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.callId, name: e.data?.name, arguments: e.data?.arguments }]
-          // 1200 characters fit a whole edit-guard denial, which names four absolute paths.
-          case 'tool/result': return [{ type: e.type, seq: e.seq, time: e.time, callId: e.data?.message?.toolCallId, isError: e.data?.message?.isError ?? false, text: truncate(resultText(e), 1200) }]
-          case 'turn/start': case 'turn/end': case 'agent-preset/selected': case 'subagent/catalog': return [{ type: e.type, seq: e.seq, time: e.time, data: e.data }]
-          case 'agent/inbox/spliced': {
-            const texts = (e.data?.inserted ?? []).flatMap((m) => (m.content ?? []).filter((c) => c.type === 'text').map((c) => truncate(c.text, 800)))
-            return texts.length ? [{ type: e.type, seq: e.seq, time: e.time, texts }] : []
-          }
-          case 'assistant/message': {
-            const content = e.data?.message?.content ?? []
-            return [{ type: e.type, seq: e.seq, time: e.time, text: content.filter((c) => c.type === 'text').map((c) => c.text).join(''), toolCalls: content.filter((c) => c.type === 'tool-call').map((c) => c.name) }]
-          }
-          default: return []
-        }
-      }).map((o) => JSON.stringify(o)).join('\n') + '\n'
       if (parent) {
         evidence(`${role}/parent.excerpt.jsonl`, excerpt(parent.events))
         evidence(`${role}/raw/parent.session.jsonl`, readSessionLines(parent.file).join('\n') + '\n')
@@ -420,8 +438,74 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       }
       evidence(`${role}/raw/recorded-child-fixture.session.jsonl`, readFileSync(childFile, 'utf8'))
       evidence(`${role}/disk.json`, {
-        workspace: ws, seedSha256Before: seedSha, files: info.run.disk, recordingWorkspace: wsRec, recordingFiles: listTree(wsRec),
+        workspace: ws, seedSha256Before: seedSha, seedContentAfter: info.run.seedAfter, files: info.run.disk, recordingWorkspace: wsRec, recordingFiles: listTree(wsRec),
         ...(created ? { requestedFile: created, outsideWrite: info.outside } : {}),
+        ...(edited ? { editedFile: edited } : {}),
+      })
+    }
+
+    // A worker child whose cwd is moved out of the project at spawn (S5). dsh
+    // keeps the child's session header on the parent's project and only moves
+    // its working directory, so the guard's roots stay on the workspace while a
+    // relative path now resolves next to it. Without the guard the write below
+    // would land in `away`.
+    if (ROLES.worker?.includes('write')) {
+      const hex = randomBytes(4).toString('hex')
+      const preset = 'gentle-ai-worker'
+      const seed = `C2SEED-${hex}`
+      const done = `C2MARK-WORKERCWD-DONE-${hex}`
+      const away = join(RUN, `away-worker-${hex}`)
+      mkdirSync(away)
+      const relativePath = `moved-${hex}.txt`
+      const writeId = 'call_c2_worker_cwd_write_relative'
+      const childScript = [
+        toolEntry(writeId, 'write', { file_path: relativePath, content: 'must not be written\n' }),
+        textEntry(`${done} worker cwd child finished`),
+      ]
+      const wsRec = join(RUN, 'rec-worker-cwd')
+      mkdirSync(wsRec, { recursive: true })
+      const rec = headless('worker-cwd-1-record-child', wsRec, childScript, { mode: 'read-only', prompt: 'C2 worker cwd child recording' })
+      const recSessions = sessionsFor(wsRec)
+      if (recSessions.length !== 1) throw new Error(`worker cwd recording: expected 1 session, found ${recSessions.length}`)
+      const childFile = join(RUN, 'fixtures', 'worker-cwd.child.session.v4.jsonl')
+      writeFileSync(childFile, readSessionLines(recSessions[0].file).join('\n') + '\n')
+
+      const ws = join(RUN, 'ws-worker-cwd')
+      mkdirSync(join(ws, 'probe'), { recursive: true })
+      writeFileSync(join(ws, 'probe', 'seed.txt'), `${seed}\n`)
+      const seedSha = sha256File(join(ws, 'probe', 'seed.txt'))
+      const spawnArgs = { description: 'c2 worker cwd probe', prompt: 'C2 worker cwd probe.', agent_preset: preset, cwd: away }
+      const parentScript = [
+        toolEntry('call_c2_worker_cwd_spawn', 'subagent', spawnArgs),
+        textEntry('launched-worker-cwd'),
+        textEntry('parent-notified={{fromRequest:(C2MARK-WORKERCWD-DONE-[0-9a-f]{8})}}'),
+      ]
+      const main = headless('worker-cwd-2-parent', ws, parentScript, { childFile, mode: 'workspace-write', prompt: 'C2 worker cwd delegation probe' })
+      const sessions = sessionsFor(ws)
+      const parent = sessions.find((s) => !s.events[0].parentSession)
+      const child = parent && sessions.find((s) => s.events[0].parentSession === parent.events[0].id)
+      const denied = child?.events.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === writeId)
+      moved = {
+        preset, done, away, relativePath, writeId, spawnArgs, ws, seedSha, main, parent, child,
+        recording: { exitCode: rec.exitCode, sessions: recSessions.length },
+        sessions: sessions.length,
+        childCwdChanges: (child?.events ?? []).filter((e) => e.type === 'working-directory/change').map((e) => e.data?.cwd),
+        result: denied ? { isError: denied.data.message.isError ?? false, text: resultText(denied) } : null,
+        awayAfterRun: listTree(away),
+        targetExistsAfterRun: existsSync(join(away, relativePath)),
+        disk: listTree(ws),
+      }
+      summary.workerCwd = {
+        spawnArguments: spawnArgs, childHeaderCwd: child?.events[0]?.cwd ?? null, childCwdChanges: moved.childCwdChanges,
+        result: moved.result, awayAfterRun: moved.awayAfterRun, targetExistsAfterRun: moved.targetExistsAfterRun,
+        recording: moved.recording, run: { exitCode: main.exitCode, sessions: sessions.length },
+      }
+      if (parent) evidence('worker-cwd/parent.excerpt.jsonl', excerpt(parent.events))
+      if (child) evidence('worker-cwd/child.excerpt.jsonl', excerpt(child.events))
+      evidence('worker-cwd/disk.json', {
+        workspace: ws, seedSha256Before: seedSha, files: moved.disk, spawnArguments: spawnArgs,
+        outsideDirectory: away, requestedRelativePath: relativePath, outsideFilesAfterRun: moved.awayAfterRun,
+        targetExistsAfterRun: moved.targetExistsAfterRun, denial: moved.result,
       })
     }
   } finally {
@@ -528,9 +612,23 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
         assert.ok(text.includes(`Requested path: ${JSON.stringify(c.path)};`), 'denial names the requested path')
       })
     }
+    if (info.edited) {
+      await check(`${role}: edit guard allows an edit inside the workspace`, () => {
+        const c = info.calls.find((x) => x.name === 'edit' && x.expect === 'ok')
+        assert.ok(c, 'inside edit probed')
+        const r = cEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === c.id)
+        assert.ok(r, 'result for the inside edit')
+        const text = resultText(r)
+        assert.equal(r.data.message.isError ?? false, false, `inside edit succeeded: ${truncate(text, 300)}`)
+        assert.doesNotMatch(text, /edit-guard/, 'the guard did not deny it')
+        assert.match(text, /^The file .*seed\.txt has been updated successfully\.$/)
+        assert.equal(info.run.seedAfter, info.edited.content, 'the edit reached the seed on disk')
+      })
+    }
     // Explore and verify must leave the workspace untouched; a role that may
-    // write must leave exactly the file it was asked to create.
-    await check(info.created ? `${role}: workspace holds only the requested file and the unchanged seed` : `${role}: workspace unchanged on disk`, () => {
+    // write must leave exactly the file it was asked to create and, when it
+    // may edit, the seed with exactly the requested change.
+    await check(info.created ? `${role}: workspace holds only the requested file and the edited seed` : `${role}: workspace unchanged on disk`, () => {
       const files = info.run.disk.filter((f) => f.type === 'file').map((f) => f.path)
       if (info.created) {
         assert.deepEqual(info.run.disk.map((f) => f.path), ['probe', info.created.path, 'probe/seed.txt'].sort((a, b) => a.localeCompare(b)), 'nothing else appeared')
@@ -541,20 +639,72 @@ test(`C2 role presets on dsh ${PIN} replay with the installed bundle`, { timeout
       } else {
         assert.deepEqual(files, ['probe/seed.txt'])
       }
-      assert.equal(sha256File(join(ws, 'probe', 'seed.txt')), seedSha)
+      if (info.edited) {
+        assert.equal(readFileSync(join(ws, info.edited.path), 'utf8'), info.edited.content, 'seed holds the edited content')
+        assert.notEqual(sha256File(join(ws, 'probe', 'seed.txt')), seedSha, 'seed changed on disk')
+      } else {
+        assert.equal(sha256File(join(ws, 'probe', 'seed.txt')), seedSha)
+      }
       for (const n of [`escape-${role}.txt`, `shell-${role}.txt`, `patch-${role}.txt`, 'probe/escape-' + role + '.txt']) assert.equal(existsSync(join(ws, n)), false, n)
+    })
+  }
+  if (ROLES.worker?.includes('write')) {
+    const { away, relativePath, writeId, spawnArgs, ws, seedSha, main, parent, child, done } = moved
+    const pEvents = parent?.events ?? []
+    const cEvents = child?.events ?? []
+    await check('worker cwd: the parent spawns a worker child with cwd outside the workspace', () => {
+      assert.equal(main.exitCode, 0)
+      assert.equal(moved.sessions, 2)
+      assert.ok(parent && child, 'parent and child sessions persisted')
+      assert.ok(isAbsolute(away) && !samePath(away, ws) && !resolve(away).toLowerCase().startsWith(resolve(ws).toLowerCase() + sep), 'away is outside the workspace')
+      const call = pEvents.find((e) => e.type === 'tool/call' && e.data?.callId === 'call_c2_worker_cwd_spawn')
+      assert.equal(call?.data?.name, 'subagent')
+      assert.deepEqual(JSON.parse(call.data.arguments), spawnArgs, 'the spawn carried the outside cwd')
+      const spawned = pEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === 'call_c2_worker_cwd_spawn')
+      assert.equal(resultText(spawned), `started subagent ${cEvents[0].id}`)
+      assert.equal(cEvents[0].agentPreset, 'gentle-ai-worker')
+      // The header is what anchors the roots; the cwd change is what moved.
+      assert.ok(samePath(cEvents[0].cwd, ws), `child header stays on the workspace: ${cEvents[0].cwd}`)
+      assert.ok(moved.childCwdChanges.length > 0 && moved.childCwdChanges.every((cwd) => samePath(cwd, away)), `child cwd moved to away: ${JSON.stringify(moved.childCwdChanges)}`)
+      assert.equal(assistantTexts(pEvents).at(-1), `parent-notified=${done}`)
+    })
+    await check('worker cwd: a relative write after the cwd change is denied by the edit guard', () => {
+      const r = cEvents.find((e) => e.type === 'tool/result' && e.data?.message?.toolCallId === writeId)
+      assert.ok(r, 'result for the relative write')
+      assert.equal(r.data.message.isError, true, 'relative write is an error')
+      const text = resultText(r)
+      assert.doesNotMatch(text, /unknown tool/, 'denied by the guard, not hidden by the preset')
+      assert.match(text, /gentle-ai edit-guard denied "write": the path resolves to .*outside the allowed roots/, `guard denial: ${truncate(text, 400)}`)
+      assert.ok(text.includes(`Requested path: ${JSON.stringify(relativePath)};`), 'denial names the relative path')
+      // The guard prints each path JSON-quoted (lib/edit-guard.js show()).
+      const quoted = '("(?:[^"\\\\]|\\\\.)*")'
+      const facts = text.match(new RegExp(`the path resolves to ${quoted}, .*; cwd: ${quoted}; allowed roots: ${quoted}\\.$`))
+      assert.ok(facts, `denial has target, cwd and roots: ${truncate(text, 400)}`)
+      const [target, cwd, root] = facts.slice(1).map((s) => JSON.parse(s))
+      assert.ok(samePath(target, join(away, relativePath)), `the write would have landed in away: ${target}`)
+      assert.ok(samePath(cwd, away), `denial names the moved cwd: ${cwd}`)
+      assert.ok(samePath(root, ws), `the allowed root did not follow the cwd: ${root}`)
+    })
+    await check('worker cwd: the outside directory gained no file and the workspace is unchanged', () => {
+      assert.deepEqual(moved.awayAfterRun, [], 'away was empty after the parent run')
+      assert.equal(moved.targetExistsAfterRun, false, 'target absent after the parent run')
+      assert.equal(existsSync(join(away, relativePath)), false, 'target absent now')
+      assert.deepEqual(moved.disk.map((f) => f.path), ['probe', 'probe/seed.txt'])
+      assert.equal(sha256File(join(ws, 'probe', 'seed.txt')), seedSha)
+      assert.equal(existsSync(join(ws, relativePath)), false, 'nothing landed in the workspace either')
     })
   }
   await check('isolation: every dsh command used the test-owned DSH_HOME', () => {
     const dshCommands = commands.filter((c) => c.argv[1] === DSH_BIN)
-    assert.equal(dshCommands.length, 10)
+    // Setup runs four, each role two, and the moved-cwd worker case two more.
+    assert.equal(dshCommands.length, ROLES.worker?.includes('write') ? 12 : 10)
     for (const c of dshCommands) {
       assert.equal(c.env.DSH_HOME, DSH_HOME, `${c.label} DSH_HOME`)
       assert.equal(c.env.DSH_AGENTS_HOME, AGENTS_HOME, `${c.label} DSH_AGENTS_HOME`)
     }
     assert.ok(summary.setup.isolation?.profileInitLine, 'profile initialized under the test DSH_HOME')
     const headlessRuns = dshCommands.filter((c) => c.sessionFilesUnderDshHome)
-    assert.equal(headlessRuns.length, 7)
+    assert.equal(headlessRuns.length, ROLES.worker?.includes('write') ? 9 : 7)
     for (const c of headlessRuns) {
       const s = c.sessionFilesUnderDshHome
       assert.ok(s.after > s.before, `${c.label} persisted new sessions under the test DSH_HOME`)
