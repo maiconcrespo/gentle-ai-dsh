@@ -69,7 +69,7 @@ v2 is tracked in issue #3:
 
 - **#9 — orchestrator and ODD protocol:** done (PR #8).
 - **#10 — explore / worker / verify subagents:** done for headless/ACP (PR #15); follow-ups in #25; web and desktop follow in #17.
-- **#16 — worker path guard:** open; design in the issue.
+- **#16 — worker path guard:** done; the worker writes behind `lib/edit-guard.js`, inside the project and never under `.git` (PR pending review).
 - **#17 — roles in web/desktop and the parity test:** open.
 - **#11 — integration and docs:** open; closes #3.
 
