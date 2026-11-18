@@ -29,7 +29,9 @@
 //
 // Not covered: per-role model routing (unverified; agentOptions per tool
 // instance is the only confirmed mechanism), real models, web/ACP profiles,
-// Linux and macOS hosts.
+// Linux and macOS hosts. CI runs without a pinned install, so this test skips on
+// every CI leg: the Windows run recorded in test/evidence/c2-replay.md is the
+// only real-host evidence for the guard, and the bash probes are unverified.
 //
 // Requirements: an existing install of exactly those two packages, found at
 // $C2_DSH_INSTALL, <tmpdir>/c2-dsh/install or <parent of tmpdir>/c2-dsh/install.

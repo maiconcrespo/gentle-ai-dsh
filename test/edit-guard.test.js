@@ -444,7 +444,11 @@ test('a git directory shared by a nested repository is denied by its real path',
   // nested/.git points at project/shared-git: a write through that ordinary
   // name never walks over nested/.git, so the scan has to find it.
   const project = join(ROOT, 'shared-project')
+  // A git directory is recognised by its own contents, so the fixture has them.
   mkdirSync(join(project, 'shared-git', 'hooks'), { recursive: true })
+  mkdirSync(join(project, 'shared-git', 'objects'), { recursive: true })
+  mkdirSync(join(project, 'shared-git', 'refs'), { recursive: true })
+  writeFileSync(join(project, 'shared-git', 'HEAD'), 'ref: refs/heads/main')
   mkdirSync(join(project, 'nested', 'src'), { recursive: true })
   if (!link(join(project, 'shared-git'), join(project, 'nested', '.git'))) return t.skip(NO_JUNCTION)
   const { call } = host({ roots: ['.'], project, cwd: project })
