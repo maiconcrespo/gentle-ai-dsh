@@ -258,9 +258,16 @@ test('the edit guard mounts with the roots from the table and denies outside the
 })
 
 test('a role with edit tools and no roots cannot be defined', () => {
-  // definition() reads the frozen table, so the refusal is pinned in its source.
-  const source = read('../lib/role-presets.js')
-  assert.match(source, /has edit tools but no allowedRoots; refusing an unguarded preset/)
+  // The frozen table must never hold such an entry, so the refusal is
+  // exercised with a synthetic one instead of only grepping for its message.
+  const bare = { preset: 'gentle-ai-bare', title: 'bare', description: 'bare', tools: ['read', ...roles.EDIT_TOOLS] }
+  assert.throws(() => presets.definition('bare', { bare }), /has edit tools but no allowedRoots; refusing an unguarded preset/)
+  assert.throws(() => presets.definition('bare', { bare: { ...bare, allowedRoots: [] } }), /no allowedRoots/)
+  const guardedTable = { bare: { ...bare, allowedRoots: ['.'] } }
+  const plugins = presets.definition('bare', guardedTable).plugins
+  assert.deepEqual(plugins.map((plugin) => plugin.id), ['role-restrict', 'edit-guard'])
+  assert.deepEqual(plugins[1].config, { allowedRoots: ['.'] })
+  // Every real role still resolves, and only the editing one mounts the guard.
   for (const role of ROLES) {
     const plugins = presets.definition(role).plugins
     const edits = roles.ROLES[role].tools.some((tool) => roles.EDIT_TOOLS.includes(tool))

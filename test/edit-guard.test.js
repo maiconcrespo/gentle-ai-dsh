@@ -427,3 +427,38 @@ test('a nested repository gets its git directory denied too', (t) => {
   // Ordinary files in the nested repository stay writable.
   assert.equal(call('write', { file_path: 'nested/src/ok.txt' }), undefined)
 })
+
+test('a drive-relative spelling is refused instead of resolved on another drive', () => {
+  // `D:file` is not absolute, so a naive join would put it under the project
+  // while the host resolves it against the process directory on drive D.
+  const { call } = host()
+  for (const requested of ['D:outside.txt', 'C:name', 'C:']) {
+    const reason = call('write', { file_path: requested })
+    assertDenied(reason, { tool: 'write', path: requested, cwd: PROJECT })
+    assert.match(reason, /drive-relative/, reason)
+  }
+  assert.equal(call('write', { file_path: 'allowed/ok.txt' }), undefined)
+})
+
+test('a git directory shared by a nested repository is denied by its real path', (t) => {
+  // nested/.git points at project/shared-git: a write through that ordinary
+  // name never walks over nested/.git, so the scan has to find it.
+  const project = join(ROOT, 'shared-project')
+  mkdirSync(join(project, 'shared-git', 'hooks'), { recursive: true })
+  mkdirSync(join(project, 'nested', 'src'), { recursive: true })
+  if (!link(join(project, 'shared-git'), join(project, 'nested', '.git'))) return t.skip(NO_JUNCTION)
+  const { call } = host({ roots: ['.'], project, cwd: project })
+  const requested = 'shared-git/hooks/pre-commit'
+  const reason = call('write', { file_path: requested })
+  assertDenied(reason, { tool: 'write', path: requested, cwd: project, roots: [project] })
+  assert.match(reason, /inside the git directory/, reason)
+  assert.equal(call('write', { file_path: 'nested/src/ok.txt' }), undefined)
+})
+
+test('a project that is itself inside a git directory allows no edit at all', () => {
+  const project = join(PROJECT, '.git', 'hooks')
+  const { call } = host({ roots: ['.'], project, cwd: project })
+  const reason = call('write', { file_path: 'pre-commit' })
+  assertDenied(reason, { tool: 'write', path: 'pre-commit', cwd: project, roots: [project] })
+  assert.match(reason, /inside a git directory/, reason)
+})
