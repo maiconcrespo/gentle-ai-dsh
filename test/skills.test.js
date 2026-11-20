@@ -1,9 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { copySkills, excludedSkills, listSkills } from '../scripts/sync-gentle-ai.mjs'
+import { pathToFileURL } from 'node:url'
+import { copySkills, excludedSkills, isEntryPoint, listSkills } from '../scripts/sync-gentle-ai.mjs'
 
 const rdd = ['rdd-advisory-transport', 'rdd-defect-workflow']
 
@@ -53,4 +54,17 @@ test('the sync still skips directories without a valid SKILL.md', (t) => {
   assert.deepEqual(listSkills(source), ['good-skill'])
   assert.equal(warn.mock.callCount(), 1)
   assert.match(warn.mock.calls[0].arguments[0], /^Skipping BadName: name must be kebab-case$/)
+})
+
+test('the script runs when it is reached through a symlink', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sync-entry-'))
+  const target = join(dir, 'real.mjs')
+  const link = join(dir, 'link.mjs')
+  writeFileSync(target, ['export {}', ''].join('\n'))
+  symlinkSync(target, link)
+  assert.equal(isEntryPoint(target, pathToFileURL(target).href), true)
+  assert.equal(isEntryPoint(link, pathToFileURL(target).href), true, 'a symlinked entry point must still run the sync')
+  assert.equal(isEntryPoint(join(dir, 'other.mjs'), pathToFileURL(target).href), false)
+  assert.equal(isEntryPoint(undefined, pathToFileURL(target).href), false)
+  assert.equal(realpathSync(link), realpathSync(target))
 })

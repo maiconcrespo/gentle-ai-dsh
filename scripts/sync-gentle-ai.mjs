@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import { parseFrontmatter, validateSkill } from '../lib/skills.js'
 import { composeOrchestratorPrompt, renderOrchestrator } from '../lib/orchestrator.js'
 import { defaultBudgets, renderRouting } from '../lib/routing.js'
@@ -41,8 +41,16 @@ export function copySkills(skillRoot, target) {
   return skills
 }
 
+// Compare real paths: a script reached through a symlink keeps the link path in argv[1] while the
+// module URL is already resolved, so a plain href comparison would silently skip the whole sync.
+export function isEntryPoint(entry = process.argv[1], moduleUrl = import.meta.url) {
+  if (!entry) return false
+  const real = (path) => { try { return realpathSync(path) } catch { return path } }
+  return real(entry) === real(fileURLToPath(moduleUrl))
+}
+
 // Run the sync only when invoked as a script, so tests can import the helpers above without cloning.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isEntryPoint()) {
   const root = dirname(dirname(fileURLToPath(import.meta.url)))
   const { gentleAi: { repository, ref } } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   const temp = mkdtempSync(join(tmpdir(), 'gentle-ai-sync-'))
