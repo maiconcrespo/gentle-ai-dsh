@@ -308,7 +308,7 @@ test('the registration plugin is exported and requires no service at load', asyn
 
 test('runtime guidance describes every role and the platform shell', () => {
   for (const role of ROLES) assert.ok(dshRuntimeAdaptation.includes(`\`${roles.ROLES[role].preset}\``), role)
-  for (const part of ['`pwsh` on Windows', '`bash` on Linux and macOS', 'not limited by path', 'read-only until the edit-surface guard (#16) ships']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  for (const part of ['`pwsh` on Windows', '`bash` on Linux and macOS', 'not limited by path', 'Do not run `gentle-ai review` commands', 'read-only until the edit-surface guard (#16) ships']) assert.ok(dshRuntimeAdaptation.includes(part), part)
 })
 
 test('PR-facing files name #16 and cite no removed evidence or out-of-repo tools', () => {

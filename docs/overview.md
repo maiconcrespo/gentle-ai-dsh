@@ -26,7 +26,7 @@ All content comes from gentle-ai **v4.4.0** (commit `55240afb100ad6d2ef5fbe16f7b
 | Implementation Routing (ODD protocol) | `internal/components/agentguidance/routing.go` (`RenderRouting`), budgets from `internal/agents/capabilitymanifest/manifest.go` | Second part of `orchestrator.md` | 23,970 bytes |
 | Engram | External `engram` executable | Not bundled; installed by the user | — |
 
-Shipped skills: `branch-pr`, `chained-pr`, `cognitive-doc-design`, `comment-writer`, `gentle-ai-bench`, `gentle-ai-collab-perfect`, `issue-root-resolution`, `rdd-advisory-transport`, `rdd-defect-workflow`, `systemic-issue-triage`, `work-unit-commits`.
+Shipped skills: `branch-pr`, `chained-pr`, `cognitive-doc-design`, `comment-writer`, `gentle-ai-bench`, `gentle-ai-collab-perfect`, `issue-root-resolution`, `systemic-issue-triage`, `work-unit-commits`. The two RDD skills are excluded by name in `scripts/sync-gentle-ai.mjs`, because review is out of v2 scope, and a test keeps a future sync from bringing them back.
 
 The orchestrator and routing are not hand-copied: `lib/orchestrator.js` and `lib/routing.js` are JavaScript ports of gentle-ai's own Go render logic. They take the generic, non-review path that gentle-ai uses for runtimes without its review transport. Updating gentle-ai means bumping the ref and running `npm run sync`.
 
