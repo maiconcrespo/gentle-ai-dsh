@@ -31,7 +31,8 @@ test('shipped prompt composes orchestrator, routing and dsh adaptation in order'
 })
 
 test('dsh adaptation documents runtime-specific overrides', () => {
-  for (const part of ['takes precedence', 'subagent_fork', 'returns immediately', 'empty conversation', 'exact allowed edit surfaces', '<available_skills>', '.atl/skill-registry.md', '_shared/skill-resolver.md', '~/.claude/skills', '~/.config/opencode/skills', '.agents/skills', 'mem_session_start', 'session working directory', 'parent saves', 'mirror is pending', 'independent read-only verifier']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  for (const part of ['takes precedence', 'subagent_fork', 'returns immediately', 'empty conversation', 'exact allowed edit surfaces', '`<available_skills>` catalog', 'lists every skill installed for this session', 'mem_session_start', 'session working directory', 'parent saves', 'mirror is pending', 'independent read-only verifier']) assert.ok(dshRuntimeAdaptation.includes(part), part)
+  for (const foreign of ['.atl/skill-registry.md', '_shared/skill-resolver.md', '~/.claude/skills', '~/.config/opencode/skills', '.agents/skills', './skills']) assert.ok(!dshRuntimeAdaptation.includes(foreign), `adaptation still names ${foreign}`)
   assert.ok(Buffer.byteLength(dshRuntimeAdaptation) < 2048)
 })
 
