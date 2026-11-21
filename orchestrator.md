@@ -203,9 +203,9 @@ For skill-shaped requests, do not treat the injected skill list as complete. Use
 
 Discovery order:
 
-1. Read `.atl/skill-registry.md` when present.
+1. Read the `<available_skills>` catalog when present.
 2. If the registry suggests a specific skill, load the indexed `SKILL.md` path before acting.
-3. If the expected skill is absent from the registry but the request clearly names a known workflow, search common project/user skill directories such as `./skills`, `.agents/skills`, `~/.config/opencode/skills`, `~/.claude/skills`, and other configured skill roots.
+3. If the expected skill is absent from the registry but the request clearly names a known workflow, ask the `skill` tool which skills this session has and pick the one the request names.
 4. Prefer the most specific project skill over a global skill with the same intent.
 5. If no matching skill exists, continue with the smallest safe fallback and say which expected skill was unavailable.
 
@@ -244,14 +244,14 @@ This prevents duplicate sub-agent launches that cause "File X has been modified 
 
 ### Sub-Agent Launch Pattern
 
-ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include pre-resolved **skill paths** from the skill registry. Follow the **Skill Resolver Protocol** (see `_shared/skill-resolver.md` in the skills directory).
+ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include pre-resolved **skill paths** from the skill registry. Follow the **Skill Resolver Protocol** (see the `SKILL.md` path the `skill` tool reports for each skill).
 
 The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the skill index, and passes matching `SKILL.md` paths into each sub-agent's prompt. It retains the runtime's configured model choices for delegated tasks.
 
 Orchestrator skill resolution (do once per session):
 
 1. `mem_search(query: "skill-registry", project: "{project}")` → `mem_get_observation(id)` for full registry content
-2. Fallback: read `.atl/skill-registry.md` if engram not available
+2. Fallback: read the `<available_skills>` catalog if engram not available
 3. Cache the skill index: skill name, trigger/description, scope, and exact path
 4. If no registry exists, warn user and proceed without project-specific standards
 
@@ -371,6 +371,6 @@ This section is the reference detail for the protocol above.
 This section takes precedence over the gentle-ai text above where they conflict.
 
 - Delegate with the `subagent` tool. It returns immediately and you are notified when the child finishes. Children start with an empty conversation, so each prompt must be self-contained. When the `subagent` tool offers `agent_preset`, pick the role with it: `gentle-ai-explore` (the default) and `gentle-ai-worker` get only `glob`, `grep` and `read`; `gentle-ai-verify` also gets the platform shell, `pwsh` on Windows and `bash` on Linux and macOS, for checks; it is not limited by path or command, so name the exact commands. Role children have no `skill`, Engram or delegation tools. The worker is read-only until the edit-surface guard (#16) ships: make edits yourself, within the exact allowed edit surfaces. `subagent_fork` children keep every parent tool; never use them for restricted work. Otherwise, delegate without it and state the role limits in the prompt.
-- Load skills with the `skill` tool from the `<available_skills>` catalog. Ignore references to `.atl/skill-registry.md`, `_shared/skill-resolver.md`, and other agents' skill directories (`~/.claude/skills`, `~/.config/opencode/skills`, `.agents/skills`). Put the skill instructions a role child needs in its prompt.
+- Load skills with the `skill` tool from the `<available_skills>` catalog, which lists every skill installed for this session. Put the skill instructions a role child needs in its prompt.
 - Engram is optional. Use `mem_*` tools only when available. Before writing, call `mem_session_start` with the session working directory and pass its returned project; writes without it are denied. Children may not have Engram: the parent saves their reported discoveries. When Engram is unavailable, keep the feature document as the only record and say the mirror is pending.
 - There is no native review in dsh: verification is the change's own checks plus, for a named high-risk item, an independent read-only verifier subagent.
