@@ -63,8 +63,9 @@ import {
   readSessionEvents, readSessionLines, resultText, sha256File, textEntry, toolEntry,
 } from './c2-replay/lib.mjs'
 import { ROLE_NAMES, roleTools, shellTool } from '../lib/roles.js'
+import { DSH_PIN } from './dsh-pin.mjs'
 
-const PIN = '0.2.2-rc.1'
+const PIN = DSH_PIN
 const REPO = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]+$/, '')
 const OVERLAY = join(REPO, 'test', 'c2-replay', 'replay.patch.yml')
 // Shell probes per shell tool: one that would write a file, one that prints a marker.
