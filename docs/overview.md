@@ -40,7 +40,7 @@ The orchestrator and routing are not hand-copied: `lib/orchestrator.js` and `lib
 - **Left out:** gentle-ai's native review / receipt-driven development (RDD), Judgment Day and the provider defect handoff. dsh has no gentle-ai review transport, so the render drops them and fails if any review content leaks through.
 - **Adapted for dsh** (`lib/dsh-runtime.js`), taking precedence over the upstream text where they conflict:
   - Delegation uses dsh's `subagent` / `subagent_fork` tools.
-  - Skills load with dsh's `skill` tool, not gentle-ai's skill-registry files or other agents' skill directories.
+  - Skills load with dsh's `skill` tool from the `<available_skills>` catalog, which lists every skill installed for this session.
   - Engram is optional and project-scoped through `mem_session_start`.
   - Verification is the change's own checks, plus an independent read-only verifier for high-risk changes.
 
