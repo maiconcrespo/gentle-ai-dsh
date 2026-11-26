@@ -1,5 +1,6 @@
 import './bundle.test.js'
 import './c2-replay.test.js'
+import './dsh-composition.test.js'
 import './engram.test.js'
 import './foreign-paths.test.js'
 import './guard.test.js'
