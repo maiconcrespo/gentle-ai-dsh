@@ -26,6 +26,7 @@
     ".": "./index.js",
     "./role-presets": "./lib/role-presets.js",
     "./role-restrict": "./lib/role-restrict.js",
+    "./edit-guard": "./lib/edit-guard.js",
     "./roles": "./lib/roles.js",
     "./package.json": "./package.json",
     "./cordis.patch.yml": "./cordis.patch.yml"
